@@ -4,7 +4,7 @@ class Reich(models.Model):
     name = models.CharField(max_length=250)
 
     def __str__(self):
-        return self.name
+        return self.name + ' ' + str(self.pk)
 
 class User(models.Model):
     firstName = models.CharField(max_length=250)
@@ -54,14 +54,21 @@ class Ruestgueter(models.Model):
                ' ' + str(self.direction) + ' ' + str(self.firstX) + ' ' + str(self.firstY) + ' ' + str(self.secondX)+\
                ' ' + str(self.secondY)
 
-class Karte(models.Model):
+class Field(models.Model):
     type = models.IntegerField()
-    reich = models.ForeignKey(Reich, on_delete=models.CASCADE)
     x = models.IntegerField()
     y = models.IntegerField()
 
     def __str__(self):
         return str(self.x) + ', ' + str(self.y)
+
+class Reichsgebiet(models.Model):
+    reich = models.ForeignKey(Reich, on_delete=models.CASCADE)
+    x = models.IntegerField()
+    y = models.IntegerField()
+
+    def __str__(self):
+        return str(self.reich) + ', ' + str(self.x) + ', ' + str(self.y)
 
 class Fluesse(models.Model):
     firstX = models.IntegerField()

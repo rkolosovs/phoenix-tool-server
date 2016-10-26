@@ -2,8 +2,9 @@ from django.http import HttpResponse
 from django.template import loader
 from django.core import serializers
 import json
-from .models import Truppen
-from .models import Ruestgueter
+from .models import Field, Fluesse, Ruestgueter, Truppen, Reich, Reichsgebiet
+import django.middleware.csrf
+## Views for saving data from the Phoenix launcher, and views for dinspensing it.
 
 def armyData(request):
     all_troops_data = serializers.serialize('python', Truppen.objects.all())
@@ -16,3 +17,154 @@ def buildingData(request):
     data = [d['fields'] for d in all_buildings_data]
     returnData = json.dumps(data)
     return HttpResponse(returnData)
+
+def fieldData(request):
+    all_field_data = serializers.serialize('python', Field.objects.all())
+    data = [d['fields'] for d in all_field_data]
+    returnData = json.dumps(data)
+    return HttpResponse(returnData)
+
+def saveFieldData(request):
+    currentMapData = Field.objects.all()
+    mapdata = request.POST.get("map")
+    listOfData = mapdata.split(";")
+    for listItem in listOfData:
+        typeXY = listItem.split(",")
+        print(listItem)
+        currentMapData.filter(x = typeXY[1]).filter(y = typeXY[2]).delete()
+        print("deleted")
+        field = Field()
+        field.type = typeXY[0]
+        field.x = typeXY[1]
+        field.y = typeXY[2]
+        field.save()
+        print("saved")
+    print("done")
+    return HttpResponse("done")
+
+def saveRiverData(request):
+    currentRiverData = Fluesse.objects.all()
+    riverData = request.POST.get("river")
+    listOfData = riverData.split(";")
+    for listItem in listOfData:
+        xyxy = listItem.split(",")
+        print(listItem)
+        currentRiverData.filter(firstX=xyxy[0]).filter(firstY=xyxy[1]).filter(secondX=xyxy[2]).filter(secondY=xyxy[3]).delete()
+        print("deleted")
+        river = Fluesse()
+        river.firstX = xyxy[0]
+        river.firstY = xyxy[1]
+        river.secondX = xyxy[2]
+        river.secondY = xyxy[3]
+        river.save()
+        print("saved")
+    print("done")
+    return HttpResponse("done")
+
+def saveBuildingData(request):
+    currentBuildingData = Ruestgueter.objects.all()
+    buildingData = request.POST.get("buildings")
+    listOfData = buildingData.split(";")
+    for listItem in listOfData:
+        building = listItem.split(",")
+        print(listItem)
+        if int(building[0]) <= 4:
+            currentBuildingData.filter(type=building[0]).filter(reich=building[1]).filter(x=building[2])\
+                .filter(y=building[3]).delete()
+            print("deleted")
+            newBuilding = Ruestgueter()
+            newBuilding.type = building[0]
+            newBuilding.reich = Reich.objects.get(pk= building[1])
+            newBuilding.x = building[2]
+            newBuilding.y = building[3]
+            newBuilding.save()
+            print("saved")
+        elif int(building[0]) <= 7:
+            currentBuildingData.filter(type=building[0]).filter(reich=building[1]).filter(x=building[2])\
+                .filter(y=building[3]).filter(direction=building[4]).delete()
+            print("deleted")
+            newBuilding = Ruestgueter()
+            newBuilding.type = building[0]
+            newBuilding.reich = Reich.objects.get(pk= building[1])
+            newBuilding.x = building[2]
+            newBuilding.y = building[3]
+            newBuilding.direction = building[4]
+            newBuilding.save()
+            print("saved")
+        elif int(building[0]) <= 8:
+            currentBuildingData.filter(type=building[0]).filter(reich=building[1]).filter(firstX=building[2])\
+                .filter(firstY=building[3]).filter(secondX=building[4]).filter(secondY=building[5]).delete()
+            print("deleted")
+            newBuilding = Ruestgueter()
+            newBuilding.type = building[0]
+            newBuilding.reich = Reich.objects.get(pk= building[1])
+            newBuilding.firstX = building[2]
+            newBuilding.firstY = building[3]
+            newBuilding.secondX = building[4]
+            newBuilding.secondY = building[5]
+            newBuilding.save()
+            print("saved")
+    print("done")
+    return HttpResponse("done")
+
+def saveArmyData(request):
+    currentArmyData = Truppen.objects.all()
+    armydata = request.POST.get("armies")
+    listOfData = armydata.split(";")
+    for listItem in listOfData:
+        axyo = listItem.split(",")
+        print(listItem)
+        currentArmyData.filter(armyId = axyo[0]).filter(reich = Reich.objects.get(pk = axyo[8])).delete()
+        print("deleted")
+        army = Truppen()
+        army.armyId = axyo[0]
+        army.count = axyo[1]
+        army.leaders = axyo[2]
+        army.lkp = axyo[3]
+        army.skp = axyo[4]
+        army.mounts = axyo[5]
+        army.x = axyo[6]
+        army.y = axyo[7]
+        army.reich = Reich.objects.get(pk= axyo[8])
+        army.save()
+        print("saved")
+    print("done")
+    return HttpResponse("done")
+
+def saveBorderData(request):
+    currentBorderData = Reichsgebiet.objects.all()
+    borderdata = request.POST.get("borders")
+    listOfData = borderdata.split(";")
+    for listItem in listOfData:
+        reichfieldlist = listItem.split(":")
+        owner = Reich.objects.get(name = reichfieldlist[0])
+        fields = reichfieldlist[1].split(",")
+        for field in fields:
+            print(field)
+            xy = field.split("/")
+            currentBorderData.filter(x = xy[0]).filter(y = xy[1]).delete()
+            print("deleted")
+            reichsgebiet = Reichsgebiet()
+            reichsgebiet.reich = owner
+            reichsgebiet.x = xy[0]
+            reichsgebiet.y = xy[1]
+            reichsgebiet.save()
+            print("saved")
+    print("done")
+    return HttpResponse("done")
+
+def getBorderData(request):
+    all_border_data = serializers.serialize('python', Reichsgebiet.objects.all())
+    data = [d['fields'] for d in all_border_data]
+    returnData = json.dumps(data)
+    return HttpResponse(returnData)
+
+def getRiverData(request):
+    all_river_data = serializers.serialize('python', Fluesse.objects.all())
+    data = [d['fields'] for d in all_river_data]
+    returnData = json.dumps(data)
+    return HttpResponse(returnData)
+
+def getCSRFToken(request):
+    tokenToReturn = json.dumps(django.middleware.csrf.get_token(request))
+    return HttpResponse(tokenToReturn)
