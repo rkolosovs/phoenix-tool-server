@@ -1,0 +1,6 @@
+{
+    "armies":[
+        {"id":101, "truppen":1000, "heerfuehrer":1, "leichte":0, "schwere":0, "reittiere":0, "x":20, "y":20, "owner":0},
+        {"id":201, "truppen":500, "heerfuehrer":1, "leichte":0, "schwere":0, "reittiere":0, "x":21, "y":20, "owner":0}
+    ]
+}
