@@ -168,3 +168,7 @@ def getRiverData(request):
 def getCSRFToken(request):
     tokenToReturn = json.dumps(django.middleware.csrf.get_token(request))
     return HttpResponse(tokenToReturn)
+
+def defaultPage(request):
+    html = "<html><body>Test site returned by DJango HttpResponse.</body></html>"
+    return HttpResponse(html)
