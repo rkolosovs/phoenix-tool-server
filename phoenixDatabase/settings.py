@@ -25,7 +25,7 @@ SECRET_KEY = '&j9_t&@s^m@(581da=1vf8(j6j#2)1&jwlx94ant5m*-sof8vi'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['h2610265.stratoserver.net', 'localhost']
 
 DATA_UPLOAD_MAX_NUMBER_FIELDS = None
 
