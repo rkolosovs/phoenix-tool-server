@@ -12,7 +12,6 @@ urlpatterns = [
     url(r'^saveriverdata/', views.saveRiverData, name = 'saveRiverData'),
     url(r'^getriverdata/', views.getRiverData, name = 'getRiverData'),
     url(r'^saveborderdata/', views.saveBorderData, name = 'saveBorderData'),
-    url(r'^getborderdata/', views.getBorderData, name = 'getBorderData'),
-    url(r'^testclient/', views.defaultPage, name = 'defaultPage')
+    url(r'^getborderdata/', views.getBorderData, name = 'getBorderData')
 
 ]
