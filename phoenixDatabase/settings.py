@@ -33,6 +33,8 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = None
 
 INSTALLED_APPS = [
     'corsheaders',
+    'rest_framework',
+    'rest_framework.authtoken',
     'databaseLink.apps.DatabaselinkConfig',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -41,6 +43,15 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.TokenAuthentication',
+    )
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -122,3 +133,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
 
 STATIC_URL = '/static/'
+
+# Template to go after Login
+LOGIN_REDIRECT_URL = 'http://127.0.0.1:8080/phoenixclient.html'
+#'http://h2610265.stratoserver.net'

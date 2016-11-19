@@ -1,10 +1,13 @@
 from django.http import HttpResponse
-from django.shortcuts import render
-from django.template import loader
 from django.core import serializers
 import json
 from .models import Field, Fluesse, Ruestgueter, Truppen, Reich, Reichsgebiet
 import django.middleware.csrf
+from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login
+from django.views.generic import View
+from .forms import UserForm
+from rest_framework.authtoken.models import Token
 ## Views for saving data from the Phoenix launcher, and views for dinspensing it.
 
 def armyData(request):
@@ -169,3 +172,69 @@ def getRiverData(request):
 def getCSRFToken(request):
     tokenToReturn = json.dumps(django.middleware.csrf.get_token(request))
     return HttpResponse(tokenToReturn)
+
+class UserFormView(View):
+    form_class = UserForm
+    template_name = 'databaseLink/accountcreation_form.html'
+
+    #display blank form
+    def get(self, request):
+        form = self.form_class(None)
+        return render(request, self.template_name, {'form': form})
+
+    #process form data
+    def post(self, request):
+        form = self.form_class(request.POST)
+
+        if form.is_valid():
+
+            user = form.save(commit = False)
+
+            #cleaned (normalized) data
+            username = form.cleaned_data['username']
+            password = form.cleaned_data['password']
+            print('##################################################################')
+            print(password)
+            user.set_password(password)
+            user.save()
+            print(user.check_password(password))
+            print("___________________________________")
+            print(user)
+            #returns User object if credentials are correct (they should be at this stage)
+            user = authenticate(username=username, password=password)
+            print("___________________________________")
+            print(user)
+            if user is not None:
+
+                if user.is_active:
+                    login(request, user)
+                    return redirect('http://127.0.0.1:8080/phoenixclient.html')
+                #'http://h2610265.stratoserver.net'
+
+def loginView(request):
+    username = request.POST.get('username')
+    password = request.POST.get('password')
+    user = authenticate(username=username, password=password)
+    if user is not None:
+        if user.is_active:
+            login(request, user)
+            print("___________________________________")
+            print(username + " logged in.")
+            print("___________________________________")
+
+            # Add the token to the return serialization
+            try:
+                token = Token.objects.get(user=user)
+            except:
+                token = Token.objects.create(user=user)
+            print(token.key)
+            print("___________________________________")
+            data = {
+                'token': token.key
+            }
+            returnData = json.dumps(data)
+            return HttpResponse(returnData)
+        else:
+            return HttpResponse('This account is not Active.')
+    else:
+        return HttpResponse('Username/password combination invalid.')
