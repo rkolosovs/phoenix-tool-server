@@ -1,7 +1,7 @@
 from django.http import HttpResponse
 from django.core import serializers
 import json
-from .models import Field, Fluesse, Ruestgueter, Truppen, Reich, Reichsgebiet
+from .models import Field, Fluesse, Ruestgueter, Truppen, Reich, Reichsgebiet, Reichszugehoerigkeit
 import django.middleware.csrf
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
@@ -11,10 +11,36 @@ from rest_framework.authtoken.models import Token
 ## Views for saving data from the Phoenix launcher, and views for dinspensing it.
 
 def armyData(request):
-    all_troops_data = serializers.serialize('python', Truppen.objects.all())
-    data = [d['fields'] for d in all_troops_data]
-    returnData = json.dumps(data)
-    return HttpResponse(returnData)
+    print("***************************************************")
+    sessionKey = request.POST.get('authorization')
+    print("sessionKey:_" + sessionKey +".")
+    print("***************************************************")
+    if((sessionKey == '0' )|(sessionKey == None)):
+        all_troops_data = serializers.serialize('python', Truppen.objects.all())
+        data = [d['fields'] for d in all_troops_data]
+        for d in data:
+            d['count']=  0
+            d['leaders']=  0
+            d['mounts']=  0
+            d['lkp']=  0
+            d['skp']=  0
+        returnData = json.dumps(data)
+        return HttpResponse(returnData)
+    else:
+        user = Token.objects.get(key = sessionKey).user
+        reich = Reichszugehoerigkeit.objects.get(user = user).reich
+        print(reich)
+        all_troops_data = serializers.serialize('python', Truppen.objects.all())
+        data = [d['fields'] for d in all_troops_data]
+        for d in data:
+            if (d['reich']!= reich.pk):
+                d['count']=  0
+                d['leaders']=  0
+                d['mounts']=  0
+                d['lkp']=  0
+                d['skp']=  0
+        returnData = json.dumps(data)
+        return HttpResponse(returnData)
 
 def buildingData(request):
     all_buildings_data = serializers.serialize('python', Ruestgueter.objects.all())
@@ -112,27 +138,34 @@ def saveBuildingData(request):
     return HttpResponse("done")
 
 def saveArmyData(request):
-    currentArmyData = Truppen.objects.all()
-    armydata = request.POST.get("armies")
-    listOfData = armydata.split(";")
-    for listItem in listOfData:
-        axyo = listItem.split(",")
-        print(listItem)
-        currentArmyData.filter(armyId = axyo[0]).filter(reich = Reich.objects.get(pk = axyo[8])).delete()
-        print("deleted")
-        army = Truppen()
-        army.armyId = axyo[0]
-        army.count = axyo[1]
-        army.leaders = axyo[2]
-        army.lkp = axyo[3]
-        army.skp = axyo[4]
-        army.mounts = axyo[5]
-        army.x = axyo[6]
-        army.y = axyo[7]
-        army.reich = Reich.objects.get(pk= axyo[8])
-        army.save()
-        print("saved")
-    print("done")
+    sessionKey = request.POST.get('authorization')
+    if ((sessionKey == '0') | (sessionKey == None)):
+        pass
+    else:
+        user = Token.objects.get(key=sessionKey).user
+        reich = Reichszugehoerigkeit.objects.get(user=user).reich
+        currentArmyData = Truppen.objects.all()
+        armydata = request.POST.get("armies")
+        listOfData = armydata.split(";")
+        for listItem in listOfData:
+            axyo = listItem.split(",") # Army axyo[0-5], X = axyo[6], Y = axyo[7], Owner = axyo[8]
+            if(reich == Reich.objects.get(pk = axyo[8])):
+                print(listItem)
+                currentArmyData.filter(armyId = axyo[0]).filter(reich = Reich.objects.get(pk = axyo[8])).delete()
+                print("deleted")
+                army = Truppen()
+                army.armyId = axyo[0]
+                army.count = axyo[1]
+                army.leaders = axyo[2]
+                army.lkp = axyo[3]
+                army.skp = axyo[4]
+                army.mounts = axyo[5]
+                army.x = axyo[6]
+                army.y = axyo[7]
+                army.reich = Reich.objects.get(pk= axyo[8])
+                army.save()
+                print("saved")
+        print("done")
     return HttpResponse("done")
 
 def saveBorderData(request):
@@ -221,7 +254,9 @@ def loginView(request):
             print("___________________________________")
             print(username + " logged in.")
             print("___________________________________")
-
+            Token.objects.get(user=user).delete()
+            print("tokenDeleted")
+            print("___________________________________")
             # Add the token to the return serialization
             try:
                 token = Token.objects.get(user=user)

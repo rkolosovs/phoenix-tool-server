@@ -3,6 +3,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from rest_framework.authtoken.models import Token
 from django.conf import settings
+from django.contrib.auth.models import User
 
 # This code is triggered whenever a new user has been created and saved to the database
 
@@ -17,13 +18,6 @@ class Reich(models.Model):
     def __str__(self):
         return self.name + ' ' + str(self.pk)
 
-class User(models.Model):
-    firstName = models.CharField(max_length=250)
-    secondName = models.CharField(max_length=250)
-
-    def __str__(self):
-        return self.firstName + ' ' +self.secondName
-
 class Reichszugehoerigkeit(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     reich = models.ForeignKey(Reich, on_delete=models.CASCADE)
@@ -33,9 +27,11 @@ class Reichszugehoerigkeit(models.Model):
 
 class Char(models.Model):
     charName = models.CharField(max_length=250)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
     x = models.IntegerField()
     y = models.IntegerField()
+    firstName = models.CharField(max_length=250, null=True, blank=True)
+    secondName = models.CharField(max_length=250, null=True, blank=True)
+    reich = models.ForeignKey(Reich, on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
         return self.charName

@@ -17,7 +17,6 @@ urlpatterns = [
     url(r'^getborderdata/', views.getBorderData, name = 'getBorderData'),
     url(r'^new/', views.UserFormView.as_view(), name='createNewUser'),
     url(r'^login/$', views.loginView, name='login'),
-    #url(r'^login/$', auth_views.login, {'template_name': 'databaseLink/login.html'}, name='login'),
     url(r'^logout/$', auth_views.logout, name='logout'),
     url(r'^admin/', admin.site.urls),
 ]
