@@ -19,11 +19,11 @@ def armyData(request):
         all_troops_data = serializers.serialize('python', Truppen.objects.all())
         data = [d['fields'] for d in all_troops_data]
         for d in data:
-            d['count']=  0
-            d['leaders']=  0
-            d['mounts']=  0
-            d['lkp']=  0
-            d['skp']=  0
+            d['count']= -1
+            d['leaders']= -1
+            d['mounts']= -1
+            d['lkp']= -1
+            d['skp']= -1
         returnData = json.dumps(data)
         return HttpResponse(returnData)
     else:
@@ -34,11 +34,11 @@ def armyData(request):
         data = [d['fields'] for d in all_troops_data]
         for d in data:
             if (d['reich']!= reich.pk):
-                d['count']=  0
-                d['leaders']=  0
-                d['mounts']=  0
-                d['lkp']=  0
-                d['skp']=  0
+                d['count']= -1
+                d['leaders']= -1
+                d['mounts']= -1
+                d['lkp']= -1
+                d['skp']= -1
         returnData = json.dumps(data)
         return HttpResponse(returnData)
 
