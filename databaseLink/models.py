@@ -88,6 +88,20 @@ class Zugreihenfolge(models.Model):
     reihenfolge = models.IntegerField()
     subZug = models.IntegerField()
 
+class Event(models.Model):
+    TYPES = (
+        ("MV", "move"),
+        ("BT", "battle"),
+        ("BD", "build"),
+        ("RC", "recruitment"),
+        ("CM", "comment"),
+        ("OT", "other"),
+    )
+    type = models.CharField(max_length=2, null=True, blank=True, choices=TYPES)
+    content = models.CharField(max_length=250, null=True, blank=True)
+    processed = models.BooleanField()
+    date = models.DateTimeField(auto_now_add=True)
+
 class Truppen(models.Model):
     reich = models.ForeignKey(Reich, on_delete=models.CASCADE)
     armyId = models.IntegerField()
