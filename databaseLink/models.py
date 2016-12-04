@@ -94,6 +94,7 @@ class Event(models.Model):
         ("BT", "battle"),
         ("BD", "build"),
         ("RC", "recruitment"),
+        ("TN", "turn"),
         ("CM", "comment"),
         ("OT", "other"),
     )
