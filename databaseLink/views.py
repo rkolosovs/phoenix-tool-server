@@ -1,7 +1,7 @@
 from django.http import HttpResponse
 from django.core import serializers
 import json
-from .models import Field, Fluesse, Ruestgueter, Truppen, Reich, Reichsgebiet, Reichszugehoerigkeit
+from .models import Field, Fluesse, Ruestgueter, Truppen, Reich, Reichsgebiet, Reichszugehoerigkeit, Event
 import django.middleware.csrf
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
@@ -195,6 +195,11 @@ def getBorderData(request):
     data = [d['fields'] for d in all_border_data]
     returnData = json.dumps(data)
     return HttpResponse(returnData)
+
+def getCurrentTurn(request):
+    all_turns_data = serializers.serialize('python', Event.objects.filter(type__lte='TN'))
+    # returnData = json.dumps(data)
+    return HttpResponse(all_turns_data)
 
 def getRiverData(request):
     all_river_data = serializers.serialize('python', Fluesse.objects.all())
