@@ -85,8 +85,7 @@ class Fluesse(models.Model):
 
 class Zugreihenfolge(models.Model):
     zugNummer = models.IntegerField()
-    reihenfolge = models.IntegerField()
-    subZug = models.IntegerField()
+    reihenfolge = models.CharField(max_length=250, null=True, blank=True)
 
 class Event(models.Model):
     TYPES = (
@@ -98,10 +97,10 @@ class Event(models.Model):
         ("CM", "comment"),
         ("OT", "other"),
     )
-    type = models.CharField(max_length=2, null=True, blank=True, choices=TYPES)
-    content = models.CharField(max_length=250, null=True, blank=True)
-    processed = models.BooleanField()
-    date = models.DateTimeField(auto_now_add=True)
+    type = models.CharField(choices=TYPES, max_length=2, default="OT")
+    content = models.CharField(max_length=250, null=True)
+    processed = models.BooleanField(default=False)
+    date = models.DateTimeField(auto_now_add=True, null=True)
 
 class Truppen(models.Model):
     reich = models.ForeignKey(Reich, on_delete=models.CASCADE)
