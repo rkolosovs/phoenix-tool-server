@@ -4,6 +4,7 @@ from django.dispatch import receiver
 from rest_framework.authtoken.models import Token
 from django.conf import settings
 from django.contrib.auth.models import User
+import datetime
 
 # This code is triggered whenever a new user has been created and saved to the database
 
@@ -101,6 +102,9 @@ class Event(models.Model):
     content = models.CharField(max_length=250, null=True)
     processed = models.BooleanField(default=False)
     date = models.DateTimeField(auto_now_add=True, null=True)
+
+    def __str__(self):
+        return self.type + ', ' + self.content + ', ' + datetime.datetime.__str__(self.date)
 
 class Truppen(models.Model):
     reich = models.ForeignKey(Reich, on_delete=models.CASCADE)
