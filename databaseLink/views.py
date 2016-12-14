@@ -11,10 +11,7 @@ from rest_framework.authtoken.models import Token
 ## Views for saving data from the Phoenix launcher, and views for dinspensing it.
 
 def armyData(request):
-    print("***************************************************")
     sessionKey = request.POST.get('authorization')
-    print("sessionKey:_" + sessionKey +".")
-    print("***************************************************")
     if((sessionKey == '0' )|(sessionKey == None)):
         all_troops_data = serializers.serialize('python', Truppen.objects.all())
         data = [d['fields'] for d in all_troops_data]
@@ -29,7 +26,6 @@ def armyData(request):
     else:
         user = Token.objects.get(key = sessionKey).user
         reich = Reichszugehoerigkeit.objects.get(user = user).reich
-        print(reich)
         all_troops_data = serializers.serialize('python', Truppen.objects.all())
         data = [d['fields'] for d in all_troops_data]
         for d in data:
@@ -60,16 +56,12 @@ def saveFieldData(request):
     listOfData = mapdata.split(";")
     for listItem in listOfData:
         typeXY = listItem.split(",")
-        print(listItem)
         currentMapData.filter(x = typeXY[1]).filter(y = typeXY[2]).delete()
-        print("deleted")
         field = Field()
         field.type = typeXY[0]
         field.x = typeXY[1]
         field.y = typeXY[2]
         field.save()
-        print("saved")
-    print("done")
     return HttpResponse("done")
 
 def saveRiverData(request):
@@ -78,17 +70,13 @@ def saveRiverData(request):
     listOfData = riverData.split(";")
     for listItem in listOfData:
         xyxy = listItem.split(",")
-        print(listItem)
         currentRiverData.filter(firstX=xyxy[0]).filter(firstY=xyxy[1]).filter(secondX=xyxy[2]).filter(secondY=xyxy[3]).delete()
-        print("deleted")
         river = Fluesse()
         river.firstX = xyxy[0]
         river.firstY = xyxy[1]
         river.secondX = xyxy[2]
         river.secondY = xyxy[3]
         river.save()
-        print("saved")
-    print("done")
     return HttpResponse("done")
 
 def saveBuildingData(request):
@@ -97,22 +85,18 @@ def saveBuildingData(request):
     listOfData = buildingData.split(";")
     for listItem in listOfData:
         building = listItem.split(",")
-        print(listItem)
         if int(building[0]) <= 4:
             currentBuildingData.filter(type=building[0]).filter(reich=building[1]).filter(x=building[2])\
                 .filter(y=building[3]).delete()
-            print("deleted")
             newBuilding = Ruestgueter()
             newBuilding.type = building[0]
             newBuilding.reich = Reich.objects.get(pk= building[1])
             newBuilding.x = building[2]
             newBuilding.y = building[3]
             newBuilding.save()
-            print("saved")
         elif int(building[0]) <= 7:
             currentBuildingData.filter(type=building[0]).filter(reich=building[1]).filter(x=building[2])\
                 .filter(y=building[3]).filter(direction=building[4]).delete()
-            print("deleted")
             newBuilding = Ruestgueter()
             newBuilding.type = building[0]
             newBuilding.reich = Reich.objects.get(pk= building[1])
@@ -120,11 +104,9 @@ def saveBuildingData(request):
             newBuilding.y = building[3]
             newBuilding.direction = building[4]
             newBuilding.save()
-            print("saved")
         elif int(building[0]) <= 8:
             currentBuildingData.filter(type=building[0]).filter(reich=building[1]).filter(firstX=building[2])\
                 .filter(firstY=building[3]).filter(secondX=building[4]).filter(secondY=building[5]).delete()
-            print("deleted")
             newBuilding = Ruestgueter()
             newBuilding.type = building[0]
             newBuilding.reich = Reich.objects.get(pk= building[1])
@@ -133,8 +115,6 @@ def saveBuildingData(request):
             newBuilding.secondX = building[4]
             newBuilding.secondY = building[5]
             newBuilding.save()
-            print("saved")
-    print("done")
     return HttpResponse("done")
 
 def saveArmyData(request):
@@ -150,9 +130,7 @@ def saveArmyData(request):
         for listItem in listOfData:
             axyo = listItem.split(",") # Army axyo[0-5], X = axyo[6], Y = axyo[7], Owner = axyo[8]
             if(reich == Reich.objects.get(pk = axyo[8])):
-                print(listItem)
                 currentArmyData.filter(armyId = axyo[0]).filter(reich = Reich.objects.get(pk = axyo[8])).delete()
-                print("deleted")
                 army = Truppen()
                 army.armyId = axyo[0]
                 army.count = axyo[1]
@@ -164,8 +142,6 @@ def saveArmyData(request):
                 army.y = axyo[7]
                 army.reich = Reich.objects.get(pk= axyo[8])
                 army.save()
-                print("saved")
-        print("done")
     return HttpResponse("done")
 
 def saveBorderData(request):
@@ -177,17 +153,13 @@ def saveBorderData(request):
         owner = Reich.objects.get(name = reichfieldlist[0])
         fields = reichfieldlist[1].split(",")
         for field in fields:
-            print(field)
             xy = field.split("/")
             currentBorderData.filter(x = xy[0]).filter(y = xy[1]).delete()
-            print("deleted")
             reichsgebiet = Reichsgebiet()
             reichsgebiet.reich = owner
             reichsgebiet.x = xy[0]
             reichsgebiet.y = xy[1]
             reichsgebiet.save()
-            print("saved")
-    print("done")
     return HttpResponse("done")
 
 def getBorderData(request):
@@ -226,17 +198,10 @@ class UserFormView(View):
             #cleaned (normalized) data
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
-            print('##################################################################')
-            print(password)
             user.set_password(password)
             user.save()
-            print(user.check_password(password))
-            print("___________________________________")
-            print(user)
             #returns User object if credentials are correct (they should be at this stage)
             user = authenticate(username=username, password=password)
-            print("___________________________________")
-            print(user)
             if user is not None:
 
                 if user.is_active:
@@ -251,19 +216,12 @@ def loginView(request):
     if user is not None:
         if user.is_active:
             login(request, user)
-            print("___________________________________")
-            print(username + " logged in.")
-            print("___________________________________")
             Token.objects.get(user=user).delete()
-            print("tokenDeleted")
-            print("___________________________________")
             # Add the token to the return serialization
             try:
                 token = Token.objects.get(user=user)
             except:
                 token = Token.objects.create(user=user)
-            print(token.key)
-            print("___________________________________")
             data = {
                 'token': token.key
             }
