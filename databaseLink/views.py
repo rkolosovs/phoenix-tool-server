@@ -1,7 +1,7 @@
 from django.http import HttpResponse
 from django.core import serializers
 import json
-from .models import Field, Fluesse, Ruestgueter, Truppen, Reich, Reichsgebiet, Reichszugehoerigkeit, Event
+from .models import Field, River, Building, Troop, Realm, RealmTerritory, RealmMembership, MoveEvent, BattleEvent, BuildEvent, RecruitmentEvent, TurnEvent, CommentEvent
 import django.middleware.csrf
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
@@ -10,13 +10,14 @@ from .forms import UserForm
 from rest_framework.authtoken.models import Token
 ## Views for saving data from the Phoenix launcher, and views for dinspensing it.
 
+
 def armyData(request):
     print("***************************************************")
     sessionKey = request.POST.get('authorization')
     print("sessionKey:_" + sessionKey +".")
     print("***************************************************")
     if((sessionKey == '0' )|(sessionKey == None)):
-        all_troops_data = serializers.serialize('python', Truppen.objects.all())
+        all_troops_data = serializers.serialize('python', Troop.objects.all())
         data = [d['fields'] for d in all_troops_data]
         for d in data:
             d['count']= -1
@@ -28,9 +29,9 @@ def armyData(request):
         return HttpResponse(returnData)
     else:
         user = Token.objects.get(key = sessionKey).user
-        reich = Reichszugehoerigkeit.objects.get(user = user).reich
+        reich = RealmMembership.objects.get(user = user).reich
         print(reich)
-        all_troops_data = serializers.serialize('python', Truppen.objects.all())
+        all_troops_data = serializers.serialize('python', Troop.objects.all())
         data = [d['fields'] for d in all_troops_data]
         for d in data:
             if (d['reich']!= reich.pk):
@@ -42,17 +43,20 @@ def armyData(request):
         returnData = json.dumps(data)
         return HttpResponse(returnData)
 
+
 def buildingData(request):
-    all_buildings_data = serializers.serialize('python', Ruestgueter.objects.all())
+    all_buildings_data = serializers.serialize('python', Building.objects.all())
     data = [d['fields'] for d in all_buildings_data]
     returnData = json.dumps(data)
     return HttpResponse(returnData)
+
 
 def fieldData(request):
     all_field_data = serializers.serialize('python', Field.objects.all())
     data = [d['fields'] for d in all_field_data]
     returnData = json.dumps(data)
     return HttpResponse(returnData)
+
 
 def saveFieldData(request):
     currentMapData = Field.objects.all()
@@ -72,8 +76,9 @@ def saveFieldData(request):
     print("done")
     return HttpResponse("done")
 
+
 def saveRiverData(request):
-    currentRiverData = Fluesse.objects.all()
+    currentRiverData = River.objects.all()
     riverData = request.POST.get("river")
     listOfData = riverData.split(";")
     for listItem in listOfData:
@@ -81,7 +86,7 @@ def saveRiverData(request):
         print(listItem)
         currentRiverData.filter(firstX=xyxy[0]).filter(firstY=xyxy[1]).filter(secondX=xyxy[2]).filter(secondY=xyxy[3]).delete()
         print("deleted")
-        river = Fluesse()
+        river = River()
         river.firstX = xyxy[0]
         river.firstY = xyxy[1]
         river.secondX = xyxy[2]
@@ -91,8 +96,9 @@ def saveRiverData(request):
     print("done")
     return HttpResponse("done")
 
+
 def saveBuildingData(request):
-    currentBuildingData = Ruestgueter.objects.all()
+    currentBuildingData = Building.objects.all()
     buildingData = request.POST.get("buildings")
     listOfData = buildingData.split(";")
     for listItem in listOfData:
@@ -102,9 +108,9 @@ def saveBuildingData(request):
             currentBuildingData.filter(type=building[0]).filter(reich=building[1]).filter(x=building[2])\
                 .filter(y=building[3]).delete()
             print("deleted")
-            newBuilding = Ruestgueter()
+            newBuilding = Building()
             newBuilding.type = building[0]
-            newBuilding.reich = Reich.objects.get(pk= building[1])
+            newBuilding.reich = Realm.objects.get(pk= building[1])
             newBuilding.x = building[2]
             newBuilding.y = building[3]
             newBuilding.save()
@@ -113,9 +119,9 @@ def saveBuildingData(request):
             currentBuildingData.filter(type=building[0]).filter(reich=building[1]).filter(x=building[2])\
                 .filter(y=building[3]).filter(direction=building[4]).delete()
             print("deleted")
-            newBuilding = Ruestgueter()
+            newBuilding = Building()
             newBuilding.type = building[0]
-            newBuilding.reich = Reich.objects.get(pk= building[1])
+            newBuilding.reich = Realm.objects.get(pk= building[1])
             newBuilding.x = building[2]
             newBuilding.y = building[3]
             newBuilding.direction = building[4]
@@ -125,9 +131,9 @@ def saveBuildingData(request):
             currentBuildingData.filter(type=building[0]).filter(reich=building[1]).filter(firstX=building[2])\
                 .filter(firstY=building[3]).filter(secondX=building[4]).filter(secondY=building[5]).delete()
             print("deleted")
-            newBuilding = Ruestgueter()
+            newBuilding = Building()
             newBuilding.type = building[0]
-            newBuilding.reich = Reich.objects.get(pk= building[1])
+            newBuilding.reich = Realm.objects.get(pk= building[1])
             newBuilding.firstX = building[2]
             newBuilding.firstY = building[3]
             newBuilding.secondX = building[4]
@@ -137,23 +143,24 @@ def saveBuildingData(request):
     print("done")
     return HttpResponse("done")
 
+
 def saveArmyData(request):
     sessionKey = request.POST.get('authorization')
     if ((sessionKey == '0') | (sessionKey == None)):
         pass
     else:
         user = Token.objects.get(key=sessionKey).user
-        reich = Reichszugehoerigkeit.objects.get(user=user).reich
-        currentArmyData = Truppen.objects.all()
+        reich = RealmMembership.objects.get(user=user).reich
+        currentArmyData = Troop.objects.all()
         armydata = request.POST.get("armies")
         listOfData = armydata.split(";")
         for listItem in listOfData:
             axyo = listItem.split(",") # Army axyo[0-5], X = axyo[6], Y = axyo[7], Owner = axyo[8]
-            if(reich == Reich.objects.get(pk = axyo[8])):
+            if(reich == Realm.objects.get(pk = axyo[8])):
                 print(listItem)
-                currentArmyData.filter(armyId = axyo[0]).filter(reich = Reich.objects.get(pk = axyo[8])).delete()
+                currentArmyData.filter(armyId = axyo[0]).filter(reich = Realm.objects.get(pk = axyo[8])).delete()
                 print("deleted")
-                army = Truppen()
+                army = Troop()
                 army.armyId = axyo[0]
                 army.count = axyo[1]
                 army.leaders = axyo[2]
@@ -162,26 +169,27 @@ def saveArmyData(request):
                 army.mounts = axyo[5]
                 army.x = axyo[6]
                 army.y = axyo[7]
-                army.reich = Reich.objects.get(pk= axyo[8])
+                army.reich = Realm.objects.get(pk= axyo[8])
                 army.save()
                 print("saved")
         print("done")
     return HttpResponse("done")
 
+
 def saveBorderData(request):
-    currentBorderData = Reichsgebiet.objects.all()
+    currentBorderData = RealmTerritory.objects.all()
     borderdata = request.POST.get("borders")
     listOfData = borderdata.split(";")
     for listItem in listOfData:
         reichfieldlist = listItem.split(":")
-        owner = Reich.objects.get(name = reichfieldlist[0])
+        owner = Realm.objects.get(name = reichfieldlist[0])
         fields = reichfieldlist[1].split(",")
         for field in fields:
             print(field)
             xy = field.split("/")
             currentBorderData.filter(x = xy[0]).filter(y = xy[1]).delete()
             print("deleted")
-            reichsgebiet = Reichsgebiet()
+            reichsgebiet = RealmTerritory()
             reichsgebiet.reich = owner
             reichsgebiet.x = xy[0]
             reichsgebiet.y = xy[1]
@@ -190,26 +198,32 @@ def saveBorderData(request):
     print("done")
     return HttpResponse("done")
 
+
 def getBorderData(request):
-    all_border_data = serializers.serialize('python', Reichsgebiet.objects.all())
+    all_border_data = serializers.serialize('python', RealmTerritory.objects.all())
     data = [d['fields'] for d in all_border_data]
     returnData = json.dumps(data)
     return HttpResponse(returnData)
 
+
 def getCurrentTurn(request):
-    all_turns_data = serializers.serialize('python', Event.objects.filter(type__lte='TN'))
+    all_turns_data = serializers.serialize('python', TurnEvent.objects.filter(type__lte='TN'))
     # returnData = json.dumps(data)
+    # TODO
     return HttpResponse(all_turns_data)
 
+
 def getRiverData(request):
-    all_river_data = serializers.serialize('python', Fluesse.objects.all())
+    all_river_data = serializers.serialize('python', River.objects.all())
     data = [d['fields'] for d in all_river_data]
     returnData = json.dumps(data)
     return HttpResponse(returnData)
 
+
 def getCSRFToken(request):
     tokenToReturn = json.dumps(django.middleware.csrf.get_token(request))
     return HttpResponse(tokenToReturn)
+
 
 class UserFormView(View):
     form_class = UserForm
@@ -248,6 +262,7 @@ class UserFormView(View):
                     login(request, user)
                     return redirect('http://127.0.0.1:8080/phoenixclient.html')
                 #'http://h2610265.stratoserver.net'
+
 
 def loginView(request):
     username = request.POST.get('username')

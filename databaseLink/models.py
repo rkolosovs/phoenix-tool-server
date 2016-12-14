@@ -13,31 +13,36 @@ def create_auth_token(sender, instance=None, created=False, **kwargs):
     if created:
         Token.objects.create(user=instance)
 
-class Reich(models.Model):
+
+class Realm(models.Model):
+    tag = models.CharField(max_length=3)
     name = models.CharField(max_length=250)
 
     def __str__(self):
-        return self.name + ' ' + str(self.pk)
+        return self.name + ' (' + str(self.tag) + ')'
 
-class Reichszugehoerigkeit(models.Model):
+
+class RealmMembership(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    reich = models.ForeignKey(Reich, on_delete=models.CASCADE)
+    reich = models.ForeignKey(Realm, on_delete=models.CASCADE)
 
     def __str__(self):
-        return str(self.user) + ', ' + str(self.reich)
+        return str(self.user) + ', ' + str(self.realm)
 
-class Char(models.Model):
+
+class Character(models.Model):
     charName = models.CharField(max_length=250)
     x = models.IntegerField()
     y = models.IntegerField()
     firstName = models.CharField(max_length=250, null=True, blank=True)
     secondName = models.CharField(max_length=250, null=True, blank=True)
-    reich = models.ForeignKey(Reich, on_delete=models.CASCADE, null=True, blank=True)
+    realm = models.ForeignKey(Realm, on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
         return self.charName
 
-class Ruestgueter(models.Model):
+
+class Building(models.Model):
     DIRECTIONS = (
         ("nw", "north-west"),
         ("ne", "north-east"),
@@ -46,7 +51,7 @@ class Ruestgueter(models.Model):
         ("sw", "south-west"),
         ("w", "west"),
     )
-    reich = models.ForeignKey(Reich, on_delete=models.CASCADE)
+    realm = models.ForeignKey(Realm, on_delete=models.CASCADE, null=True)
     name = models.CharField(max_length=250, null=True, blank=True)
     type = models.IntegerField()
     x = models.IntegerField(null=True, blank=True)
@@ -58,9 +63,10 @@ class Ruestgueter(models.Model):
     secondY = models.IntegerField(null=True, blank=True)
 
     def __str__(self):
-        return str(self.reich) + ' ' + str(self.name) + ' ' + str(self.type) + ' ' + str(self.x) + ' ' + str(self.y) +\
-               ' ' + str(self.direction) + ' ' + str(self.firstX) + ' ' + str(self.firstY) + ' ' + str(self.secondX)+\
+        return str(self.realm) + ' ' + str(self.name) + ' ' + str(self.type) + ' ' + str(self.x) + ' ' + str(self.y) +\
+               ' ' + str(self.direction) + ' ' + str(self.firstX) + ' ' + str(self.firstY) + ' ' + str(self.secondX) +\
                ' ' + str(self.secondY)
+
 
 class Field(models.Model):
     type = models.IntegerField()
@@ -70,44 +76,25 @@ class Field(models.Model):
     def __str__(self):
         return str(self.x) + ', ' + str(self.y)
 
-class Reichsgebiet(models.Model):
-    reich = models.ForeignKey(Reich, on_delete=models.CASCADE)
+
+class RealmTerritory(models.Model):
+    realm = models.ForeignKey(Realm, on_delete=models.CASCADE)
     x = models.IntegerField()
     y = models.IntegerField()
 
     def __str__(self):
-        return str(self.reich) + ', ' + str(self.x) + ', ' + str(self.y)
+        return str(self.realm) + ', ' + str(self.x) + ', ' + str(self.y)
 
-class Fluesse(models.Model):
+
+class River(models.Model):
     firstX = models.IntegerField()
     firstY = models.IntegerField()
     secondX = models.IntegerField()
     secondY = models.IntegerField()
 
-class Zugreihenfolge(models.Model):
-    zugNummer = models.IntegerField()
-    reihenfolge = models.CharField(max_length=250, null=True, blank=True)
 
-class Event(models.Model):
-    TYPES = (
-        ("MV", "move"),
-        ("BT", "battle"),
-        ("BD", "build"),
-        ("RC", "recruitment"),
-        ("TN", "turn"),
-        ("CM", "comment"),
-        ("OT", "other"),
-    )
-    type = models.CharField(choices=TYPES, max_length=2, default="OT")
-    content = models.CharField(max_length=250, null=True)
-    processed = models.BooleanField(default=False)
-    date = models.DateTimeField(auto_now_add=True, null=True)
-
-    def __str__(self):
-        return self.type + ', ' + self.content + ', ' + datetime.datetime.__str__(self.date)
-
-class Truppen(models.Model):
-    reich = models.ForeignKey(Reich, on_delete=models.CASCADE)
+class Troop(models.Model):
+    realm = models.ForeignKey(Realm, on_delete=models.CASCADE, null=True)
     armyId = models.IntegerField()
     count = models.IntegerField()
     leaders = models.IntegerField()
@@ -118,4 +105,132 @@ class Truppen(models.Model):
     y = models.IntegerField()
 
     def __str__(self):
-        return str(self.reich) + ', ' + str(self.armyId)
+        return str(self.realm) + ', ' + str(self.armyId) + ', ' + str(self.x) + ', ' + str(self.y)
+
+
+class TurnOrder(models.Model):
+    # e.g. (148, 3, usa) means: in turn 148 usa is 3rd in the turn order
+    turnNumber = models.IntegerField()
+    turnOrder = models.IntegerField()
+    realm = models.ForeignKey(Realm, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return str(self.turnNumber) + ', ' + str(self.turnOrder) + ', ' + str(self.realm)
+
+
+class MoveEvent(models.Model):
+    # Used to record movement of armies
+    troop = models.ForeignKey(Troop, on_delete=models.CASCADE)
+    x = models.IntegerField()
+    y = models.IntegerField()
+    processed = models.BooleanField(default=False)
+    date = models.DateTimeField(auto_now_add=True, null=True)
+
+    def __str__(self):
+        return str(self.troop) + ' to ' + str(self.x) + ', ' + str(self.y) + ', ' + str(self.processed) + ', ' +\
+            str(self.date)
+
+
+class BattleEvent(models.Model):
+    # Used to record battles and their outcome
+    participants = models.ManyToManyField(Troop)
+    x = models.IntegerField()
+    y = models.IntegerField()
+    overrun = models.BooleanField(default=False)
+    processed = models.BooleanField(default=False)
+    date = models.DateTimeField(auto_now_add=True, null=True)
+
+    def __str__(self):
+        return str(self.x) + ', ' + str(self.y) + ', ' + str(self.processed) + ', ' + str(self.date)
+
+
+class BuildEvent(models.Model):
+    # Used to record builds commissioned
+    x = models.IntegerField()
+    y = models.IntegerField()
+    type = models.IntegerField()
+    processed = models.BooleanField(default=False)
+    date = models.DateTimeField(auto_now_add=True, null=True)
+
+    def __str__(self):
+        return str(self.x) + ', ' + str(self.y) + ', ' + str(self.type) + ', ' + str(self.processed) +\
+               ', ' + str(self.date)
+
+
+class RecruitmentEvent(models.Model):
+    # Used to record recruitment started
+    building = models.ForeignKey(Building, on_delete=models.CASCADE)
+    army = models.ForeignKey(Troop, on_delete=models.CASCADE, null=True)
+    x = models.IntegerField(null=True)
+    y = models.IntegerField(null=True)
+    footmen = models.IntegerField()
+    horsemen = models.IntegerField()
+    leaders = models.IntegerField()
+    lkp = models.IntegerField()
+    skp = models.IntegerField()
+    ships = models.IntegerField()
+    lks = models.IntegerField()
+    sks = models.IntegerField()
+    processed = models.BooleanField(default=False)
+    date = models.DateTimeField(auto_now_add=True, null=True)
+
+    def __str__(self):
+        output = str(self.building) + ' recruits '
+        if not self.footmen.null:
+            output += str(self.footmen) + ' footmen, '
+        if not self.horsemen.null:
+            output += str(self.horsemen) + ' horsemen, '
+        if not self.leaders.null:
+            output += str(self.leaders) + ' leaders, '
+        if not self.lkp.null:
+            output += str(self.lkp) + ' light catapults, '
+        if not self.skp.null:
+            output += str(self.skp) + ' heavy catapults, '
+        if not self.ships.null:
+            output += str(self.ships) + ' ships, '
+        if not self.lks.null:
+            output += str(self.lks) + ' light warships, '
+        if not self.sks.null:
+            output += str(self.sks) + ' heavy warships, '
+        output += str(self.processed) + ', ' + str(self.date)
+        return output
+
+
+class TreasuryEvent(models.Model):
+    # Used to record changes in treasury
+    realm = models.ForeignKey(Realm, on_delete=models.CASCADE)
+    change = models.IntegerField()
+    processed = models.BooleanField(default=False)
+    date = models.DateTimeField(auto_now_add=True, null=True)
+
+    def __str__(self):
+        if self.change.to_python() >= 0:
+            direction = ' gains '
+        else:
+            direction = ' loses '
+        return str(self.realm) + direction + str(abs(self.change.to_python())) + ', ' + str(self.processed) + ', ' +\
+            str(self.date)
+
+
+class TurnEvent(models.Model):
+    # Used to record turn change
+    STATUS = (
+        ("st", "start"),
+        ("fi", "finished"),
+    )
+    turn = models.ForeignKey(TurnOrder, on_delete=models.CASCADE)
+    realm = models.ForeignKey(Realm, on_delete=models.CASCADE)
+    status = models.CharField(max_length=2, default="st", choices=STATUS)
+    date = models.DateTimeField(auto_now_add=True, null=True)
+
+    def __str__(self):
+        return str(self.turn) + ', ' + str(self.realm) + ', ' + str(self.status) + ', ' + str(self.date)
+
+
+class CommentEvent(models.Model):
+    # Used to record any other non-mechanical events
+    text = models.CharField(max_length=2000, blank=True)
+    date = models.DateTimeField(auto_now_add=True, null=True)
+
+    def __str__(self):
+        return str(self.text) + ', ' + str(self.date)
