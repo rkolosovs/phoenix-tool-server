@@ -216,12 +216,12 @@ def loginView(request):
     if user is not None:
         if user.is_active:
             login(request, user)
-            Token.objects.get(user=user).delete()
-            # Add the token to the return serialization
             try:
-                token = Token.objects.get(user=user)
+                Token.objects.get(user=user).delete()
             except:
-                token = Token.objects.create(user=user)
+                pass
+            # Add the token to the return serialization
+            token = Token.objects.create(user=user)
             data = {
                 'token': token.key
             }
