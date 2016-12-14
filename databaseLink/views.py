@@ -209,7 +209,7 @@ def getBorderData(request):
 def getCurrentTurn(request):
     all_turns_data = serializers.serialize('python', TurnEvent.objects.filter(type__lte='TN'))
     # returnData = json.dumps(data)
-    # TODO
+    # TODO: fetch the most recent turn event end jsondumt it to the client
     return HttpResponse(all_turns_data)
 
 
