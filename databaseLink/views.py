@@ -207,10 +207,8 @@ def getBorderData(request):
 
 
 def getCurrentTurn(request):
-    all_turns_data = serializers.serialize('python', TurnEvent.objects.filter(type__lte='TN'))
-    # returnData = json.dumps(data)
-    # TODO: fetch the most recent turn event end jsondumt it to the client
-    return HttpResponse(all_turns_data)
+    latestTurn = TurnEvent.objects.filter(date__isnull=False).latest('date')
+    return HttpResponse(json.dumps(latestTurn), content_type='application/json')
 
 
 def getRiverData(request):
