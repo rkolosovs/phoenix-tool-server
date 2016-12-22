@@ -1,7 +1,7 @@
 from django.http import HttpResponse
 from django.core import serializers
 import json
-from .models import Field, River, Building, Troop, Realm, RealmTerritory, RealmMembership, MoveEvent, BattleEvent, BuildEvent, RecruitmentEvent, TurnEvent, CommentEvent
+from .models import Field, River, Building, Troop, Realm, RealmTerritory, RealmMembership, MoveEvent, BattleEvent, BuildEvent, RecruitmentEvent, TurnEvent, CommentEvent, TurnOrder
 import django.middleware.csrf
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
@@ -208,7 +208,11 @@ def getBorderData(request):
 
 def getCurrentTurn(request):
     latestTurn = TurnEvent.objects.filter(date__isnull=False).latest('date')
-    return HttpResponse(json.dumps(latestTurn), content_type='application/json')
+    serializedTurn = [d['fields'] for d in serializers.serialize('python', [latestTurn], fields=('turn', 'status'))]
+    turnOrder = [d['fields'] for d in serializers.serialize('python', [TurnOrder.objects.get(id=[d['turn'] for d in serializedTurn][0])])]
+    realmInTurn = [d['fields'] for d in serializers.serialize('python', [Realm.objects.get(id=[d['realm'] for d in turnOrder][0])])]
+    output = [d['turnNumber'] for d in turnOrder] + [d['tag'] for d in realmInTurn] + [d['status'] for d in serializedTurn]
+    return HttpResponse(json.dumps(output), content_type='application/json')
 
 
 def getRiverData(request):

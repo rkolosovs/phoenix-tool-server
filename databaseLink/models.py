@@ -219,12 +219,11 @@ class TurnEvent(models.Model):
         ("fi", "finished"),
     )
     turn = models.ForeignKey(TurnOrder, on_delete=models.CASCADE)
-    realm = models.ForeignKey(Realm, on_delete=models.CASCADE)
     status = models.CharField(max_length=2, default="st", choices=STATUS)
     date = models.DateTimeField(auto_now_add=True, null=True)
 
     def __str__(self):
-        return str(self.turn) + ', ' + str(self.realm) + ', ' + str(self.status) + ', ' + str(self.date)
+        return str(self.turn) + ', ' + str(self.get_status_display()) + ', ' + str(self.date)
 
 
 class CommentEvent(models.Model):
