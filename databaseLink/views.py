@@ -212,7 +212,11 @@ def getCurrentTurn(request):
     turnOrder = [d['fields'] for d in serializers.serialize('python', [TurnOrder.objects.get(id=[d['turn'] for d in serializedTurn][0])])]
     realmInTurn = [d['fields'] for d in serializers.serialize('python', [Realm.objects.get(id=[d['realm'] for d in turnOrder][0])])]
     output = [d['turnNumber'] for d in turnOrder] + [d['tag'] for d in realmInTurn] + [d['status'] for d in serializedTurn]
-    return HttpResponse(json.dumps(output), content_type='application/json')
+    return HttpResponse(json.dumps({
+        'turn': output[0],
+        'realm': output[1],
+        'status': output[2]
+    }), content_type='application/json')
 
 
 def getRiverData(request):
