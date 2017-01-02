@@ -210,6 +210,7 @@ def getCurrentTurn(request):
     latestTurn = TurnEvent.objects.filter(date__isnull=False).latest('date')
     serializedTurn = [d['fields'] for d in serializers.serialize('python', [latestTurn], fields=('turn', 'status'))]
     turnOrder = [d['fields'] for d in serializers.serialize('python', [TurnOrder.objects.get(id=[d['turn'] for d in serializedTurn][0])])]
+    # TODO: handle realm is None
     realmInTurn = [d['fields'] for d in serializers.serialize('python', [Realm.objects.get(id=[d['realm'] for d in turnOrder][0])])]
     output = [d['turnNumber'] for d in turnOrder] + [d['tag'] for d in realmInTurn] + [d['status'] for d in serializedTurn]
     return HttpResponse(json.dumps({

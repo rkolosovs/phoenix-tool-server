@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 import datetime
 
+
 # This code is triggered whenever a new user has been created and saved to the database
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
@@ -17,9 +18,13 @@ def create_auth_token(sender, instance=None, created=False, **kwargs):
 class Realm(models.Model):
     tag = models.CharField(max_length=3)
     name = models.CharField(max_length=250)
+    active = models.BooleanField(default=True)
 
     def __str__(self):
-        return self.name + ' (' + str(self.tag) + ')'
+        if (self.active):
+            return self.name + ' (' + str(self.tag) + ')'
+        else:  # mark realms lost to history with X Realm (rlm) X
+            return 'X ' + self.name + ' (' + str(self.tag) + ') X'
 
 
 class RealmMembership(models.Model):
@@ -63,8 +68,8 @@ class Building(models.Model):
     secondY = models.IntegerField(null=True, blank=True)
 
     def __str__(self):
-        return str(self.realm) + ' ' + str(self.name) + ' ' + str(self.type) + ' ' + str(self.x) + ' ' + str(self.y) +\
-               ' ' + str(self.direction) + ' ' + str(self.firstX) + ' ' + str(self.firstY) + ' ' + str(self.secondX) +\
+        return str(self.realm) + ' ' + str(self.name) + ' ' + str(self.type) + ' ' + str(self.x) + ' ' + str(self.y) + \
+               ' ' + str(self.direction) + ' ' + str(self.firstX) + ' ' + str(self.firstY) + ' ' + str(self.secondX) + \
                ' ' + str(self.secondY)
 
 
@@ -112,23 +117,26 @@ class TurnOrder(models.Model):
     # e.g. (148, 3, usa) means: in turn 148 usa is 3rd in the turn order
     turnNumber = models.IntegerField()
     turnOrder = models.IntegerField()
-    realm = models.ForeignKey(Realm, on_delete=models.CASCADE)
+    realm = models.ForeignKey(Realm, on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
-        return str(self.turnNumber) + ', ' + str(self.turnOrder) + ', ' + str(self.realm)
+        if (self.realm is None):
+            return str(self.turnNumber) + ', ' + str(self.turnOrder) + ', None'
+        else:
+            return str(self.turnNumber) + ', ' + str(self.turnOrder) + ', ' + str(self.realm)
 
 
 class MoveEvent(models.Model):
     # Used to record movement of armies
-    troop = models.ForeignKey(Troop, on_delete=models.CASCADE)
+    troop = models.ForeignKey(Troop, null=True, on_delete=models.SET_NULL)
     x = models.IntegerField()
     y = models.IntegerField()
     processed = models.BooleanField(default=False)
     date = models.DateTimeField(auto_now_add=True, null=True)
 
     def __str__(self):
-        return str(self.troop) + ' to ' + str(self.x) + ', ' + str(self.y) + ', ' + str(self.processed) + ', ' +\
-            str(self.date)
+        return str(self.troop) + ' to ' + str(self.x) + ', ' + str(self.y) + ', ' + str(self.processed) + ', ' + \
+               str(self.date)
 
 
 class BattleEvent(models.Model):
@@ -153,7 +161,7 @@ class BuildEvent(models.Model):
     date = models.DateTimeField(auto_now_add=True, null=True)
 
     def __str__(self):
-        return str(self.x) + ', ' + str(self.y) + ', ' + str(self.type) + ', ' + str(self.processed) +\
+        return str(self.x) + ', ' + str(self.y) + ', ' + str(self.type) + ', ' + str(self.processed) + \
                ', ' + str(self.date)
 
 
@@ -208,8 +216,8 @@ class TreasuryEvent(models.Model):
             direction = ' gains '
         else:
             direction = ' loses '
-        return str(self.realm) + direction + str(abs(self.change.to_python())) + ', ' + str(self.processed) + ', ' +\
-            str(self.date)
+        return str(self.realm) + direction + str(abs(self.change.to_python())) + ', ' + str(self.processed) + ', ' + \
+               str(self.date)
 
 
 class TurnEvent(models.Model):
