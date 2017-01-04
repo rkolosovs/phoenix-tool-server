@@ -28,13 +28,16 @@ def armyData(request):
         reich = Reichszugehoerigkeit.objects.get(user = user).reich
         all_troops_data = serializers.serialize('python', Truppen.objects.all())
         data = [d['fields'] for d in all_troops_data]
-        for d in data:
-            if (d['reich']!= reich.pk):
-                d['count']= -1
-                d['leaders']= -1
-                d['mounts']= -1
-                d['lkp']= -1
-                d['skp']= -1
+        if(user.is_staff):
+            pass
+        else:
+            for d in data:
+                if (d['reich']!= reich.pk):
+                    d['count']= -1
+                    d['leaders']= -1
+                    d['mounts']= -1
+                    d['lkp']= -1
+                    d['skp']= -1
         returnData = json.dumps(data)
         return HttpResponse(returnData)
 
