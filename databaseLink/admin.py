@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Reich, User, Reichszugehoerigkeit, Char, Ruestgueter, Field, Reichsgebiet, Fluesse, Zugreihenfolge, Truppen
+from .models import Reich, User, Reichszugehoerigkeit, Char, Ruestgueter, Field, Reichsgebiet, Fluesse, Zugreihenfolge, Truppen, LastSavedTimeStamp
 
 admin.site.register(Reich)
 admin.site.register(Reichszugehoerigkeit)
@@ -10,3 +10,4 @@ admin.site.register(Fluesse)
 admin.site.register(Zugreihenfolge)
 admin.site.register(Truppen)
 admin.site.register(Reichsgebiet)
+admin.site.register(LastSavedTimeStamp)

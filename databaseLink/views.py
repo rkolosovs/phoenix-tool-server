@@ -1,7 +1,7 @@
 from django.http import HttpResponse
 from django.core import serializers
 import json
-from .models import Field, Fluesse, Ruestgueter, Truppen, Reich, Reichsgebiet, Reichszugehoerigkeit
+from .models import Field, Fluesse, Ruestgueter, Truppen, Reich, Reichsgebiet, Reichszugehoerigkeit, LastSavedTimeStamp
 import django.middleware.csrf
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
@@ -65,6 +65,9 @@ def saveFieldData(request):
         field.x = typeXY[1]
         field.y = typeXY[2]
         field.save()
+    LastSavedTimeStamp.objects.all().delete()
+    saveTime = LastSavedTimeStamp()
+    saveTime.save()
     return HttpResponse("done")
 
 def saveRiverData(request):
@@ -80,6 +83,9 @@ def saveRiverData(request):
         river.secondX = xyxy[2]
         river.secondY = xyxy[3]
         river.save()
+    LastSavedTimeStamp.objects.all().delete()
+    saveTime = LastSavedTimeStamp()
+    saveTime.save()
     return HttpResponse("done")
 
 def saveBuildingData(request):
@@ -118,6 +124,9 @@ def saveBuildingData(request):
             newBuilding.secondX = building[4]
             newBuilding.secondY = building[5]
             newBuilding.save()
+    LastSavedTimeStamp.objects.all().delete()
+    saveTime = LastSavedTimeStamp()
+    saveTime.save()
     return HttpResponse("done")
 
 def saveArmyData(request):
@@ -145,6 +154,9 @@ def saveArmyData(request):
                 army.y = axyo[7]
                 army.reich = Reich.objects.get(pk= axyo[8])
                 army.save()
+    LastSavedTimeStamp.objects.all().delete()
+    saveTime = LastSavedTimeStamp()
+    saveTime.save()
     return HttpResponse("done")
 
 def saveBorderData(request):
@@ -163,6 +175,9 @@ def saveBorderData(request):
             reichsgebiet.x = xy[0]
             reichsgebiet.y = xy[1]
             reichsgebiet.save()
+    LastSavedTimeStamp.objects.all().delete()
+    saveTime = LastSavedTimeStamp()
+    saveTime.save()
     return HttpResponse("done")
 
 def getBorderData(request):
@@ -177,7 +192,7 @@ def getRiverData(request):
     returnData = json.dumps(data)
     return HttpResponse(returnData)
 
-def getCSRFToken(request):
+def getCSRFToken(request): ## funktioniert nicht
     tokenToReturn = json.dumps(django.middleware.csrf.get_token(request))
     return HttpResponse(tokenToReturn)
 
@@ -209,8 +224,7 @@ class UserFormView(View):
 
                 if user.is_active:
                     login(request, user)
-                    return redirect('http://127.0.0.1:8080/phoenixclient.html')
-                #'http://h2610265.stratoserver.net'
+                    return redirect('http://h2610265.stratoserver.net')
 
 def loginView(request):
     username = request.POST.get('username')
@@ -226,7 +240,8 @@ def loginView(request):
             # Add the token to the return serialization
             token = Token.objects.create(user=user)
             data = {
-                'token': token.key
+                'token': token.key,
+                'staff': user.is_staff
             }
             returnData = json.dumps(data)
             return HttpResponse(returnData)
