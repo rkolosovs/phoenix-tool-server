@@ -209,14 +209,15 @@ def getBorderData(request):
 def getCurrentTurn(request):
     latestTurn = TurnEvent.objects.filter(date__isnull=False).latest('date')
     serializedTurn = [d['fields'] for d in serializers.serialize('python', [latestTurn], fields=('turn', 'status'))]
-    turnOrder = [d['fields'] for d in serializers.serialize('python', [TurnOrder.objects.get(id=[d['turn'] for d in serializedTurn][0])])]
+    turnOrder = [d['fields'] for d in serializers.serialize('python', [TurnOrder.objects.get(id=[d['turn'] for d in serializedTurn][0])])][0]
     # TODO: handle realm is None
-    realmInTurn = [d['fields'] for d in serializers.serialize('python', [Realm.objects.get(id=[d['realm'] for d in turnOrder][0])])]
-    output = [d['turnNumber'] for d in turnOrder] + [d['tag'] for d in realmInTurn] + [d['status'] for d in serializedTurn]
+    print(turnOrder)
+    realmInTurn = getRealmForId(turnOrder)
+    # output = turnOrder['turnNumber'] + realmInTurn + [d['status'] for d in serializedTurn]
     return HttpResponse(json.dumps({
-        'turn': output[0],
-        'realm': output[1],
-        'status': output[2]
+        'turn': turnOrder['turnNumber'],
+        'realm': realmInTurn,
+        'status': [d['status'] for d in serializedTurn][0]
     }), content_type='application/json')
 
 
@@ -300,3 +301,10 @@ def loginView(request):
             return HttpResponse('This account is not Active.')
     else:
         return HttpResponse('Username/password combination invalid.')
+
+
+def getRealmForId(d):
+    if d['realm'] is None:
+        return None
+    else:
+        return Realm.objects.get(id=[d][0])['fields']['tag']
