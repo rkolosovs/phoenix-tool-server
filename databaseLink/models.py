@@ -27,7 +27,7 @@ class Realm(models.Model):
 
 class RealmMembership(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    reich = models.ForeignKey(Realm, on_delete=models.CASCADE)
+    realm = models.ForeignKey(Realm, on_delete=models.CASCADE)
 
     def __str__(self):
         return str(self.user) + ', ' + str(self.realm)
@@ -54,6 +54,7 @@ class Building(models.Model):
         ("sw", "south-west"),
         ("w", "west"),
     )
+    type_names = ["castle", "city", "fortress", "capital", "capitalFort", "wall", "harbor", "bridge", "street"]
     realm = models.ForeignKey(Realm, on_delete=models.CASCADE, null=True)
     name = models.CharField(max_length=250, null=True, blank=True)
     type = models.IntegerField()
@@ -66,9 +67,15 @@ class Building(models.Model):
     secondY = models.IntegerField(null=True, blank=True)
 
     def __str__(self):
-        return str(self.realm) + ' ' + str(self.name) + ' ' + str(self.type) + ' ' + str(self.x) + ' ' + str(self.y) + \
-               ' ' + str(self.direction) + ' ' + str(self.firstX) + ' ' + str(self.firstY) + ' ' + str(self.secondX) + \
-               ' ' + str(self.secondY)
+        result = str(self.realm) + ' ' + str(self.name) + ' ' + str(self.type_names[self.type])
+        if 0 <= self.type <= 7:
+            result += ' (' + str(self.x) + ', ' + str(self.y) + ')'
+        if 5 <= self.type <= 7:
+            result += ' ' + str(self.direction)
+        if self.type == 8:
+            result += ' between (' + str(self.firstX) + ', ' + str(self.firstY) + ') and (' + str(self.secondX) + \
+               ', ' + str(self.secondY) + ')'
+        return result
 
 
 class Field(models.Model):
@@ -94,6 +101,10 @@ class River(models.Model):
     firstY = models.IntegerField()
     secondX = models.IntegerField()
     secondY = models.IntegerField()
+
+    def __str__(self):
+        return 'river between (' + str(self.firstX) + ', ' + str(self.firstY) + ') and (' + str(self.secondX) \
+               + ', ' + str(self.secondY) + ')'
 
 
 class Troop(models.Model):
