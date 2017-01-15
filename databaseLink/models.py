@@ -251,5 +251,6 @@ class CommentEvent(models.Model):
     def __str__(self):
         return str(self.text) + ', ' + str(self.date)
 
+
 class LastSavedTimeStamp(models.Model):
     timeStamp = models.DateTimeField(auto_now_add=True)

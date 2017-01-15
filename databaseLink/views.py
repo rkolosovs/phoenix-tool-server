@@ -14,33 +14,39 @@ from rest_framework.authtoken.models import Token
 
 def armyData(request):
     sessionKey = request.POST.get('authorization')
-    if((sessionKey == '0' )|(sessionKey == None)):
+    if (sessionKey == '0') | (sessionKey is None):
         all_troops_data = serializers.serialize('python', Troop.objects.all())
         data = [d['fields'] for d in all_troops_data]
         for d in data:
-            d['count']= -1
-            d['leaders']= -1
-            d['mounts']= -1
-            d['lkp']= -1
-            d['skp']= -1
+            d['count'] = -1
+            d['leaders'] = -1
+            d['mounts'] = -1
+            d['lkp'] = -1
+            d['skp'] = -1
         returnData = json.dumps(data)
         return HttpResponse(returnData)
     else:
-        user = Token.objects.get(key = sessionKey).user
-        reich = RealmMembership.objects.get(user = user).reich
-        print(reich)
+        user = Token.objects.get(key=sessionKey).user
+        realmMembership = serializers.serialize('python', RealmMembership.objects.filter(user=user))
         all_troops_data = serializers.serialize('python', Troop.objects.all())
         data = [d['fields'] for d in all_troops_data]
-        if(user.is_staff):
+        if user.is_staff:  # user is SL
             pass
-        else:
+        elif len(realmMembership) is 0:  # user is observer
             for d in data:
-                if (d['reich']!= reich.pk):
-                    d['count']= -1
-                    d['leaders']= -1
-                    d['mounts']= -1
-                    d['lkp']= -1
-                    d['skp']= -1
+                d['count'] = -1
+                d['leaders'] = -1
+                d['mounts'] = -1
+                d['lkp'] = -1
+                d['skp'] = -1
+        else:  # user is realm member
+            for d in data:
+                if d['realm'] != realmMembership[0]['fields']['realm']:
+                    d['count'] = -1
+                    d['leaders'] = -1
+                    d['mounts'] = -1
+                    d['lkp'] = -1
+                    d['skp'] = -1
         returnData = json.dumps(data)
         return HttpResponse(returnData)
 
@@ -65,7 +71,7 @@ def saveFieldData(request):
     listOfData = mapdata.split(";")
     for listItem in listOfData:
         typeXY = listItem.split(",")
-        currentMapData.filter(x = typeXY[1]).filter(y = typeXY[2]).delete()
+        currentMapData.filter(x=typeXY[1]).filter(y=typeXY[2]).delete()
         field = Field()
         field.type = typeXY[0]
         field.x = typeXY[1]
@@ -109,7 +115,7 @@ def saveBuildingData(request):
             print("deleted")
             newBuilding = Building()
             newBuilding.type = building[0]
-            newBuilding.reich = Realm.objects.get(pk= building[1])
+            newBuilding.reich = Realm.objects.get(pk=building[1])
             newBuilding.x = building[2]
             newBuilding.y = building[3]
             newBuilding.save()
@@ -119,7 +125,7 @@ def saveBuildingData(request):
             print("deleted")
             newBuilding = Building()
             newBuilding.type = building[0]
-            newBuilding.reich = Realm.objects.get(pk= building[1])
+            newBuilding.reich = Realm.objects.get(pk=building[1])
             newBuilding.x = building[2]
             newBuilding.y = building[3]
             newBuilding.direction = building[4]
@@ -144,7 +150,7 @@ def saveBuildingData(request):
 
 def saveArmyData(request):
     sessionKey = request.POST.get('authorization')
-    if ((sessionKey == '0') | (sessionKey == None)):
+    if (sessionKey == '0') | (sessionKey is None):
         pass
     else:
         user = Token.objects.get(key=sessionKey).user
@@ -153,10 +159,10 @@ def saveArmyData(request):
         armydata = request.POST.get("armies")
         listOfData = armydata.split(";")
         for listItem in listOfData:
-            axyo = listItem.split(",") # Army axyo[0-5], X = axyo[6], Y = axyo[7], Owner = axyo[8]
-            if(reich == Realm.objects.get(pk = axyo[8])):
+            axyo = listItem.split(",")  # Army axyo[0-5], X = axyo[6], Y = axyo[7], Owner = axyo[8]
+            if reich == Realm.objects.get(pk=axyo[8]):
                 print(listItem)
-                currentArmyData.filter(armyId = axyo[0]).filter(reich = Realm.objects.get(pk = axyo[8])).delete()
+                currentArmyData.filter(armyId=axyo[0]).filter(reich=Realm.objects.get(pk=axyo[8])).delete()
                 print("deleted")
                 army = Troop()
                 army.armyId = axyo[0]
@@ -167,7 +173,7 @@ def saveArmyData(request):
                 army.mounts = axyo[5]
                 army.x = axyo[6]
                 army.y = axyo[7]
-                army.reich = Realm.objects.get(pk= axyo[8])
+                army.reich = Realm.objects.get(pk=axyo[8])
                 army.save()
     LastSavedTimeStamp.objects.all().delete()
     saveTime = LastSavedTimeStamp()
@@ -181,11 +187,11 @@ def saveBorderData(request):
     listOfData = borderdata.split(";")
     for listItem in listOfData:
         reichfieldlist = listItem.split(":")
-        owner = Realm.objects.get(name = reichfieldlist[0])
+        owner = Realm.objects.get(name=reichfieldlist[0])
         fields = reichfieldlist[1].split(",")
         for field in fields:
             xy = field.split("/")
-            currentBorderData.filter(x = xy[0]).filter(y = xy[1]).delete()
+            currentBorderData.filter(x=xy[0]).filter(y=xy[1]).delete()
             print("deleted")
             reichsgebiet = RealmTerritory()
             reichsgebiet.reich = owner
@@ -247,7 +253,7 @@ class UserFormView(View):
 
         if form.is_valid():
 
-            user = form.save(commit = False)
+            user = form.save(commit=False)
 
             #cleaned (normalized) data
             username = form.cleaned_data['username']
@@ -274,11 +280,24 @@ def loginView(request):
                 Token.objects.get(user=user).delete()
             except:
                 pass
+            # check if user is a member of a realm, a sl or just a guest
+            realmMembership = serializers.serialize('python', RealmMembership.objects.filter(user=user))
+            if user.is_staff:
+                group = 'sl'
+            elif len(realmMembership) > 0:
+                rm = realmMembership[0]['fields']['realm']
+                realm = serializers.serialize('python', Realm.objects.filter(pk=rm))[0]['fields']['tag']
+                print(realm)
+                group = realm
+            else:
+                group = 'guest'
+
+            print('GROUP IN LOGIN VIEW: ' + group)
             # Add the token to the return serialization
             token = Token.objects.create(user=user)
             data = {
                 'token': token.key,
-                'staff': user.is_staff
+                'group': group
             }
             returnData = json.dumps(data)
             return HttpResponse(returnData)
