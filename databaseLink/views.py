@@ -1,7 +1,8 @@
 from django.http import HttpResponse
 from django.core import serializers
 import json
-from .models import Field, River, Building, Troop, Realm, RealmTerritory, RealmMembership, MoveEvent, BattleEvent, BuildEvent, RecruitmentEvent, TurnEvent, CommentEvent, TurnOrder
+from .models import Field, River, Building, Troop, Realm, RealmTerritory, RealmMembership, MoveEvent, BattleEvent, \
+    BuildEvent, RecruitmentEvent, TurnEvent, CommentEvent, TurnOrder, LastSavedTimeStamp
 import django.middleware.csrf
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
@@ -12,10 +13,7 @@ from rest_framework.authtoken.models import Token
 
 
 def armyData(request):
-    print("***************************************************")
     sessionKey = request.POST.get('authorization')
-    print("sessionKey:_" + sessionKey +".")
-    print("***************************************************")
     if((sessionKey == '0' )|(sessionKey == None)):
         all_troops_data = serializers.serialize('python', Troop.objects.all())
         data = [d['fields'] for d in all_troops_data]
@@ -33,13 +31,16 @@ def armyData(request):
         print(reich)
         all_troops_data = serializers.serialize('python', Troop.objects.all())
         data = [d['fields'] for d in all_troops_data]
-        for d in data:
-            if (d['reich']!= reich.pk):
-                d['count']= -1
-                d['leaders']= -1
-                d['mounts']= -1
-                d['lkp']= -1
-                d['skp']= -1
+        if(user.is_staff):
+            pass
+        else:
+            for d in data:
+                if (d['reich']!= reich.pk):
+                    d['count']= -1
+                    d['leaders']= -1
+                    d['mounts']= -1
+                    d['lkp']= -1
+                    d['skp']= -1
         returnData = json.dumps(data)
         return HttpResponse(returnData)
 
@@ -64,16 +65,15 @@ def saveFieldData(request):
     listOfData = mapdata.split(";")
     for listItem in listOfData:
         typeXY = listItem.split(",")
-        print(listItem)
         currentMapData.filter(x = typeXY[1]).filter(y = typeXY[2]).delete()
-        print("deleted")
         field = Field()
         field.type = typeXY[0]
         field.x = typeXY[1]
         field.y = typeXY[2]
         field.save()
-        print("saved")
-    print("done")
+    LastSavedTimeStamp.objects.all().delete()
+    saveTime = LastSavedTimeStamp()
+    saveTime.save()
     return HttpResponse("done")
 
 
@@ -83,7 +83,6 @@ def saveRiverData(request):
     listOfData = riverData.split(";")
     for listItem in listOfData:
         xyxy = listItem.split(",")
-        print(listItem)
         currentRiverData.filter(firstX=xyxy[0]).filter(firstY=xyxy[1]).filter(secondX=xyxy[2]).filter(secondY=xyxy[3]).delete()
         print("deleted")
         river = River()
@@ -92,8 +91,9 @@ def saveRiverData(request):
         river.secondX = xyxy[2]
         river.secondY = xyxy[3]
         river.save()
-        print("saved")
-    print("done")
+    LastSavedTimeStamp.objects.all().delete()
+    saveTime = LastSavedTimeStamp()
+    saveTime.save()
     return HttpResponse("done")
 
 
@@ -103,7 +103,6 @@ def saveBuildingData(request):
     listOfData = buildingData.split(";")
     for listItem in listOfData:
         building = listItem.split(",")
-        print(listItem)
         if int(building[0]) <= 4:
             currentBuildingData.filter(type=building[0]).filter(reich=building[1]).filter(x=building[2])\
                 .filter(y=building[3]).delete()
@@ -114,7 +113,6 @@ def saveBuildingData(request):
             newBuilding.x = building[2]
             newBuilding.y = building[3]
             newBuilding.save()
-            print("saved")
         elif int(building[0]) <= 7:
             currentBuildingData.filter(type=building[0]).filter(reich=building[1]).filter(x=building[2])\
                 .filter(y=building[3]).filter(direction=building[4]).delete()
@@ -126,7 +124,6 @@ def saveBuildingData(request):
             newBuilding.y = building[3]
             newBuilding.direction = building[4]
             newBuilding.save()
-            print("saved")
         elif int(building[0]) <= 8:
             currentBuildingData.filter(type=building[0]).filter(reich=building[1]).filter(firstX=building[2])\
                 .filter(firstY=building[3]).filter(secondX=building[4]).filter(secondY=building[5]).delete()
@@ -139,8 +136,9 @@ def saveBuildingData(request):
             newBuilding.secondX = building[4]
             newBuilding.secondY = building[5]
             newBuilding.save()
-            print("saved")
-    print("done")
+    LastSavedTimeStamp.objects.all().delete()
+    saveTime = LastSavedTimeStamp()
+    saveTime.save()
     return HttpResponse("done")
 
 
@@ -171,8 +169,9 @@ def saveArmyData(request):
                 army.y = axyo[7]
                 army.reich = Realm.objects.get(pk= axyo[8])
                 army.save()
-                print("saved")
-        print("done")
+    LastSavedTimeStamp.objects.all().delete()
+    saveTime = LastSavedTimeStamp()
+    saveTime.save()
     return HttpResponse("done")
 
 
@@ -185,7 +184,6 @@ def saveBorderData(request):
         owner = Realm.objects.get(name = reichfieldlist[0])
         fields = reichfieldlist[1].split(",")
         for field in fields:
-            print(field)
             xy = field.split("/")
             currentBorderData.filter(x = xy[0]).filter(y = xy[1]).delete()
             print("deleted")
@@ -194,8 +192,9 @@ def saveBorderData(request):
             reichsgebiet.x = xy[0]
             reichsgebiet.y = xy[1]
             reichsgebiet.save()
-            print("saved")
-    print("done")
+    LastSavedTimeStamp.objects.all().delete()
+    saveTime = LastSavedTimeStamp()
+    saveTime.save()
     return HttpResponse("done")
 
 
@@ -228,7 +227,7 @@ def getRiverData(request):
     return HttpResponse(returnData)
 
 
-def getCSRFToken(request):
+def getCSRFToken(request): ## TODO: funktioniert noch nicht
     tokenToReturn = json.dumps(django.middleware.csrf.get_token(request))
     return HttpResponse(tokenToReturn)
 
@@ -253,23 +252,15 @@ class UserFormView(View):
             #cleaned (normalized) data
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
-            print('##################################################################')
-            print(password)
             user.set_password(password)
             user.save()
-            print(user.check_password(password))
-            print("___________________________________")
-            print(user)
             #returns User object if credentials are correct (they should be at this stage)
             user = authenticate(username=username, password=password)
-            print("___________________________________")
-            print(user)
             if user is not None:
 
                 if user.is_active:
                     login(request, user)
-                    return redirect('http://127.0.0.1:8080/phoenixclient.html')
-                #'http://h2610265.stratoserver.net'
+                    return redirect('http://h2610265.stratoserver.net')
 
 
 def loginView(request):
@@ -279,21 +270,15 @@ def loginView(request):
     if user is not None:
         if user.is_active:
             login(request, user)
-            print("___________________________________")
-            print(username + " logged in.")
-            print("___________________________________")
-            Token.objects.get(user=user).delete()
-            print("tokenDeleted")
-            print("___________________________________")
-            # Add the token to the return serialization
             try:
-                token = Token.objects.get(user=user)
+                Token.objects.get(user=user).delete()
             except:
-                token = Token.objects.create(user=user)
-            print(token.key)
-            print("___________________________________")
+                pass
+            # Add the token to the return serialization
+            token = Token.objects.create(user=user)
             data = {
-                'token': token.key
+                'token': token.key,
+                'staff': user.is_staff
             }
             returnData = json.dumps(data)
             return HttpResponse(returnData)

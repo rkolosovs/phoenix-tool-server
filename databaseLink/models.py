@@ -4,8 +4,6 @@ from django.dispatch import receiver
 from rest_framework.authtoken.models import Token
 from django.conf import settings
 from django.contrib.auth.models import User
-import datetime
-
 
 # This code is triggered whenever a new user has been created and saved to the database
 
@@ -241,3 +239,6 @@ class CommentEvent(models.Model):
 
     def __str__(self):
         return str(self.text) + ', ' + str(self.date)
+
+class LastSavedTimeStamp(models.Model):
+    timeStamp = models.DateTimeField(auto_now_add=True)
