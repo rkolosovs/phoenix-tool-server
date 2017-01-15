@@ -286,13 +286,9 @@ def loginView(request):
                 group = 'sl'
             elif len(realmMembership) > 0:
                 rm = realmMembership[0]['fields']['realm']
-                realm = serializers.serialize('python', Realm.objects.filter(pk=rm))[0]['fields']['tag']
-                print(realm)
-                group = realm
+                group = serializers.serialize('python', Realm.objects.filter(pk=rm))[0]['fields']['tag']
             else:
                 group = 'guest'
-
-            print('GROUP IN LOGIN VIEW: ' + group)
             # Add the token to the return serialization
             token = Token.objects.create(user=user)
             data = {
