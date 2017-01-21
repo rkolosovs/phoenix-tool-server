@@ -215,10 +215,7 @@ def getCurrentTurn(request):
     latestTurn = TurnEvent.objects.filter(date__isnull=False).latest('date')
     serializedTurn = [d['fields'] for d in serializers.serialize('python', [latestTurn], fields=('turn', 'status'))]
     turnOrder = [d['fields'] for d in serializers.serialize('python', [TurnOrder.objects.get(id=[d['turn'] for d in serializedTurn][0])])][0]
-    # TODO: handle realm is None
-    print(turnOrder)
     realmInTurn = getRealmForId(turnOrder)
-    # output = turnOrder['turnNumber'] + realmInTurn + [d['status'] for d in serializedTurn]
     return HttpResponse(json.dumps({
         'turn': turnOrder['turnNumber'],
         'realm': realmInTurn,
@@ -301,6 +298,51 @@ def loginView(request):
             return HttpResponse('This account is not Active.')
     else:
         return HttpResponse('Username/password combination invalid.')
+
+
+def postNextTurn(request):
+    sessionKey = request.POST.get('authorization')
+    user = Token.objects.get(key=sessionKey).user
+    realmMembership = serializers.serialize('python', RealmMembership.objects.filter(user=user))
+    if (sessionKey == '0') | (sessionKey is None):
+        return HttpResponse('Authorisation failure. Please log in.')
+    elif user.is_staff:
+        nextTurn()
+        return getCurrentTurn(None)
+    else:
+        latestTurn = TurnEvent.objects.filter(date__isnull=False).latest('date')
+        serializedTurn = [d['fields'] for d in serializers.serialize('python', [latestTurn], fields=('turn', 'status'))]
+        turnOrder = [d['fields'] for d in serializers.serialize('python', [TurnOrder.objects.get(id=[d['turn'] for d in serializedTurn][0])])][0]
+        status = [d['status'] for d in serializedTurn][0]
+        # turn = turnOrder['turnNumber']
+        realm = getRealmForId(turnOrder)
+        if (realm is not None) & (realm == realmMembership[0]) & (status == 'st'):
+            nextTurn()
+            return getCurrentTurn(None)
+        else:
+            return HttpResponse('Access denied. You can only end your own turn.')
+
+
+def nextTurn():
+    latestTurn = TurnEvent.objects.filter(date__isnull=False).latest('date')
+    serializedTurn = [d['fields'] for d in serializers.serialize('python', [latestTurn], fields=('turn', 'status'))]
+    currentTurnOrderElement = [d['fields'] for d in serializers.serialize('python', [TurnOrder.objects.get(id=[d['turn'] for d in serializedTurn][0])])][0]
+    turnOrder = currentTurnOrderElement['turnOrder']
+    turnNumber = currentTurnOrderElement['turnNumber']
+    status = [d['status'] for d in serializedTurn][0]
+    if status == 'st':
+        if turnOrder == 0:
+            newstatus = 'st'
+        else:
+            newstatus = 'fi'
+    else:
+        newstatus = 'st'
+
+    newturn = TurnOrder.objects.filter(turnNumber=turnNumber, turnOrder=turnOrder+1)
+    if len(newturn) == 0:
+        newturn = TurnOrder.objects.filter(turnNumber=turnNumber+1, turnOrder=0)
+    te = TurnEvent(status=newstatus, turn=newturn[0])
+    te.save()
 
 
 def getRealmForId(d):
