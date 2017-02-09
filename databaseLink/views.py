@@ -305,7 +305,7 @@ def postNextTurn(request):
     user = Token.objects.get(key=sessionKey).user
     realmMembership = serializers.serialize('python', RealmMembership.objects.filter(user=user))
     if (sessionKey == '0') | (sessionKey is None):
-        return HttpResponse('Authorisation failure. Please log in.')
+        return HttpResponse(status=401) # Authorisation failure. Please log in.
     elif user.is_staff:
         nextTurn()
         return getCurrentTurn(None)
@@ -320,7 +320,7 @@ def postNextTurn(request):
             nextTurn()
             return getCurrentTurn(None)
         else:
-            return HttpResponse('Access denied. You can only end your own turn.')
+            return HttpResponse(stauts=403) # Access denied. You can only end your own turn.
 
 
 def nextTurn():
@@ -338,9 +338,11 @@ def nextTurn():
     else:
         newstatus = 'st'
 
-    newturn = TurnOrder.objects.filter(turnNumber=turnNumber, turnOrder=turnOrder+1)
+    newturn = TurnOrder.objects.filter(turnNumber=turnNumber, turnOrder=(turnOrder+1))
+    print(newturn)
     if len(newturn) == 0:
-        newturn = TurnOrder.objects.filter(turnNumber=turnNumber+1, turnOrder=0)
+        newturn = TurnOrder.objects.filter(turnNumber=(turnNumber+1), turnOrder=0)
+    print(newturn)
     te = TurnEvent(status=newstatus, turn=newturn[0])
     te.save()
 
