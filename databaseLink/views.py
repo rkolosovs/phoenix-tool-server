@@ -305,7 +305,7 @@ def postNextTurn(request):
     user = Token.objects.get(key=sessionKey).user
     realmMembership = serializers.serialize('python', RealmMembership.objects.filter(user=user))
     if (sessionKey == '0') | (sessionKey is None):
-        return HttpResponse(status=401) # Authorisation failure. Please log in.
+        return HttpResponse(status=401)  # Authorisation failure. Please log in.
     elif user.is_staff:
         nextTurn()
         return getCurrentTurn(None)
@@ -316,11 +316,11 @@ def postNextTurn(request):
         status = [d['status'] for d in serializedTurn][0]
         # turn = turnOrder['turnNumber']
         realm = getRealmForId(turnOrder)
-        if (realm is not None) & (realm == realmMembership[0]) & (status == 'st'):
+        if (realm is not None) & (turnOrder['realm'] == realmMembership[0]['fields']['realm']) & (status == 'st'):
             nextTurn()
             return getCurrentTurn(None)
         else:
-            return HttpResponse(stauts=403) # Access denied. You can only end your own turn.
+            return HttpResponse(status=403)  # Access denied. You can only end your own turn.
 
 
 def nextTurn():
@@ -338,11 +338,13 @@ def nextTurn():
     else:
         newstatus = 'st'
 
-    newturn = TurnOrder.objects.filter(turnNumber=turnNumber, turnOrder=(turnOrder+1))
-    print(newturn)
+    if newstatus == 'st':
+        newturn = TurnOrder.objects.filter(turnNumber=turnNumber, turnOrder=(turnOrder+1))
+    else:
+        newturn = TurnOrder.objects.filter(turnNumber=turnNumber, turnOrder=turnOrder)
+
     if len(newturn) == 0:
         newturn = TurnOrder.objects.filter(turnNumber=(turnNumber+1), turnOrder=0)
-    print(newturn)
     te = TurnEvent(status=newstatus, turn=newturn[0])
     te.save()
 
@@ -351,4 +353,4 @@ def getRealmForId(d):
     if d['realm'] is None:
         return None
     else:
-        return Realm.objects.get(id=[d][0])['fields']['tag']
+        return Realm.objects.get(id=[d][0]['realm']).tag
