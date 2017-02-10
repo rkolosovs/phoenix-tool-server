@@ -307,18 +307,22 @@ def postNextTurn(request):
     if (sessionKey == '0') | (sessionKey is None):
         return HttpResponse(status=401)  # Authorisation failure. Please log in.
     elif user.is_staff:
-        nextTurn()
-        return getCurrentTurn(None)
+        try:
+            nextTurn()
+            return getCurrentTurn(None)
+        except TurnOrderException:
+            return HttpResponse(status=521)  # Turn Order ran out. You should fill it! (custom status code)
     else:
         latestTurn = TurnEvent.objects.filter(date__isnull=False).latest('date')
         serializedTurn = [d['fields'] for d in serializers.serialize('python', [latestTurn], fields=('turn', 'status'))]
         turnOrder = [d['fields'] for d in serializers.serialize('python', [TurnOrder.objects.get(id=[d['turn'] for d in serializedTurn][0])])][0]
         status = [d['status'] for d in serializedTurn][0]
-        # turn = turnOrder['turnNumber']
-        realm = getRealmForId(turnOrder)
-        if (realm is not None) & (turnOrder['realm'] == realmMembership[0]['fields']['realm']) & (status == 'st'):
-            nextTurn()
-            return getCurrentTurn(None)
+        if (getRealmForId(turnOrder) is not None) & (turnOrder['realm'] == realmMembership[0]['fields']['realm']) & (status == 'st'):
+            try:
+                nextTurn()
+                return getCurrentTurn(None)
+            except TurnOrderException:
+                return HttpResponse(status=520)  # Turn Order ran out. Tell SL to fill it! (custom status code)
         else:
             return HttpResponse(status=403)  # Access denied. You can only end your own turn.
 
@@ -345,6 +349,8 @@ def nextTurn():
 
     if len(newturn) == 0:
         newturn = TurnOrder.objects.filter(turnNumber=(turnNumber+1), turnOrder=0)
+    if len(newturn) == 0:
+        raise TurnOrderException
     te = TurnEvent(status=newstatus, turn=newturn[0])
     te.save()
 
@@ -354,3 +360,8 @@ def getRealmForId(d):
         return None
     else:
         return Realm.objects.get(id=[d][0]['realm']).tag
+
+
+class TurnOrderException(Exception):
+    """End of turn orders reached. Generate more turn orders."""
+    pass
