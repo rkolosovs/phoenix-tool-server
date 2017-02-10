@@ -17,6 +17,7 @@ urlpatterns = [
     url(r'^getborderdata/', views.getBorderData, name='getBorderData'),
     url(r'^getturn/', views.getCurrentTurn, name='getCurrentTurn'),
     url(r'^nextturn/', views.postNextTurn, name='postNextTurn'),
+    url(r'^moveevent/', views.postMoveEvent, name='postMoveEvent'),
     url(r'^new/', views.UserFormView.as_view(), name='createNewUser'),
     url(r'^login/$', views.loginView, name='login'),
     url(r'^logout/$', auth_views.logout, name='logout'),

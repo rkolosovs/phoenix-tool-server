@@ -9,7 +9,7 @@ from django.contrib.auth import authenticate, login
 from django.views.generic import View
 from .forms import UserForm
 from rest_framework.authtoken.models import Token
-## Views for saving data from the Phoenix launcher, and views for dinspensing it.
+# Views for saving data from the Phoenix launcher, and views for dispensing it.
 
 
 def armyData(request):
@@ -325,6 +325,44 @@ def postNextTurn(request):
                 return HttpResponse(status=520)  # Turn Order ran out. Tell SL to fill it! (custom status code)
         else:
             return HttpResponse(status=403)  # Access denied. You can only end your own turn.
+
+
+def postMoveEvent(request):
+    print "post move event"
+    sessionKey = request.POST.get('authorization')
+    user = Token.objects.get(key=sessionKey).user
+    realmMembership = serializers.serialize('python', RealmMembership.objects.filter(user=user))
+    event = request.POST.get('content')
+    print event  # TODO: proper content has to be extracted
+    if (sessionKey == '0') | (sessionKey is None):
+        return HttpResponse(status=401)  # Authorisation failure. Please log in.
+    elif user.is_staff:
+        # enter into db
+        enterMoveEvent(event)
+    else:
+        # check if user is of correct realm, then enter into db
+        enterMoveEvent(event)
+
+
+# def postBattleEvent(request):
+#     sessionKey = request.POST.get('authorization')
+#     user = Token.objects.get(key=sessionKey).user
+#     realmMembership = serializers.serialize('python', RealmMembership.objects.filter(user=user))
+#     event = request.POST.get('content')
+#     if (sessionKey == '0') | (sessionKey is None):
+#         return HttpResponse(status=401)  # Authorisation failure. Please log in.
+#     elif user.is_staff:
+#         # enter into db
+#         enterBattleEvent(event)
+#     else:
+#         # check if user is of correct realm, then enter into db
+#         enterBattleEvent(event)
+
+
+def enterMoveEvent(event):
+    return True  # TODO
+
+# def enterBattleEvent(event):
 
 
 def nextTurn():
