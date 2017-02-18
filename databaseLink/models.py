@@ -105,3 +105,9 @@ class Truppen(models.Model):
 
 class LastSavedTimeStamp(models.Model):
     timeStamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "LastSavedTimeStamps"
+
+    def __str__(self):
+        return str(self.pk) + ', ' + str(self.timeStamp)

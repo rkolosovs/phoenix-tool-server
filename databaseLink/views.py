@@ -8,7 +8,7 @@ from django.contrib.auth import authenticate, login
 from django.views.generic import View
 from .forms import UserForm
 from rest_framework.authtoken.models import Token
-## Views for saving data from the Phoenix launcher, and views for dinspensing it.
+## Views for saving data from the Phoenix launcher, and views for dispensing it.
 
 def armyData(request):
     sessionKey = request.POST.get('authorization')
@@ -40,6 +40,11 @@ def armyData(request):
                     d['skp']= -1
         returnData = json.dumps(data)
         return HttpResponse(returnData)
+
+def getLastSavedTimeStamp(request):
+    stamp = LastSavedTimeStamp.objects.all().first()
+    time = json.dumps(str(stamp.timeStamp))
+    return HttpResponse(time)
 
 def buildingData(request):
     all_buildings_data = serializers.serialize('python', Ruestgueter.objects.all())
