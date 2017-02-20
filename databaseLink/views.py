@@ -328,20 +328,21 @@ def postNextTurn(request):
 
 
 def postMoveEvent(request):
-    print "post move event"
     sessionKey = request.POST.get('authorization')
     user = Token.objects.get(key=sessionKey).user
     realmMembership = serializers.serialize('python', RealmMembership.objects.filter(user=user))
-    event = request.POST.get('content')
-    print event  # TODO: proper content has to be extracted
+    event = json.loads(request.POST.get('content'))
     if (sessionKey == '0') | (sessionKey is None):
         return HttpResponse(status=401)  # Authorisation failure. Please log in.
     elif user.is_staff:
         # enter into db
-        enterMoveEvent(event)
+        return enterMoveEvent(event)
     else:
         # check if user is of correct realm, then enter into db
-        enterMoveEvent(event)
+        if getRealmForId(realmMembership[0]['fields']) == event['realm']:
+            return enterMoveEvent(event)
+        else:
+            return HttpResponse(status=403)  # Access denied. You can only move your own army.
 
 
 # def postBattleEvent(request):
@@ -360,7 +361,11 @@ def postMoveEvent(request):
 
 
 def enterMoveEvent(event):
-    return True  # TODO
+    realm = serializers.serialize('python', Realm.objects.filter(tag=event['realm']))[0]
+    army = Troop.objects.filter(armyId=event['id']).filter(realm=realm['pk'])[0]
+    me = MoveEvent(troop=army, x=event['x'], y=event['y'])
+    me.save()
+    return HttpResponse(status=200)
 
 # def enterBattleEvent(event):
 
