@@ -345,29 +345,38 @@ def postMoveEvent(request):
             return HttpResponse(status=403)  # Access denied. You can only move your own army.
 
 
-# def postBattleEvent(request):
-#     sessionKey = request.POST.get('authorization')
-#     user = Token.objects.get(key=sessionKey).user
-#     realmMembership = serializers.serialize('python', RealmMembership.objects.filter(user=user))
-#     event = request.POST.get('content')
-#     if (sessionKey == '0') | (sessionKey is None):
-#         return HttpResponse(status=401)  # Authorisation failure. Please log in.
-#     elif user.is_staff:
-#         # enter into db
-#         enterBattleEvent(event)
-#     else:
-#         # check if user is of correct realm, then enter into db
-#         enterBattleEvent(event)
+def postBattleEvent(request):
+    sessionKey = request.POST.get('authorization')
+    event = json.loads(request.POST.get('content'))
+    if (sessionKey == '0') | (sessionKey is None):
+        return HttpResponse(status=401)  # Authorisation failure. Please log in.
+    else:
+        # enter into db
+        return enterBattleEvent(event)
 
 
 def enterMoveEvent(event):
-    realm = serializers.serialize('python', Realm.objects.filter(tag=event['realm']))[0]
-    army = Troop.objects.filter(armyId=event['id']).filter(realm=realm['pk'])[0]
-    me = MoveEvent(troop=army, x=event['x'], y=event['y'])
+    realm = serializers.serialize('python', Realm.objects.filter(tag=event['realm']))
+    if len(realm) == 0:
+        return HttpResponse(status=400)  # Invalid input. Realm given does not exist.
+    army = Troop.objects.filter(armyId=event['id']).filter(realm=realm[0]['pk'])
+    if len(army) == 0:
+        return HttpResponse(status=400)  # Invalid input. Troop does not exist.
+    me = MoveEvent(troop=army[0], x=event['x'], y=event['y'])
     me.save()
     return HttpResponse(status=200)
 
-# def enterBattleEvent(event):
+
+def enterBattleEvent(event):
+    participants = event['participants']
+    armies = list()
+    for p in participants:
+        pRealm = Realm.objects.filter(tag=p['realm'])[0]
+        participant = Troop.objects.filter(armyId=p['id']).filter(realm=pRealm)[0]
+        armies.append(participant)
+    me = BattleEvent(participants=armies, x=event['x'], y=event['y'], overrun=event['overrun'])
+    me.save()
+    return HttpResponse(status=200)
 
 
 def nextTurn():
