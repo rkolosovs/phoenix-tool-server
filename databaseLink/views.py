@@ -347,12 +347,31 @@ def postMoveEvent(request):
 
 def postBattleEvent(request):
     sessionKey = request.POST.get('authorization')
+    user = Token.objects.get(key=sessionKey).user
     event = json.loads(request.POST.get('content'))
+    participants = event['participants']
+    armies = list()
+    for p in participants:
+        pRealm = Realm.objects.filter(tag=p['realm'])[0]
+        participant = Troop.objects.filter(armyId=p['id']).filter(realm=pRealm)[0]
+        armies.append(participant)
     if (sessionKey == '0') | (sessionKey is None):
         return HttpResponse(status=401)  # Authorisation failure. Please log in.
-    else:
+    elif user.is_staff:
         # enter into db
-        return enterBattleEvent(event)
+        return enterBattleEvent(event, armies)
+    else:
+        # check if user is of correct realm, then enter into db
+        allowed = False
+        realmMembership = serializers.serialize('python', RealmMembership.objects.filter(user=user))[0]['fields']['realm']
+        for x in armies:  # check if at least one involved army belongs to an issuing player
+            if x.realm.pk == realmMembership:
+                allowed = True
+        if allowed:
+            return enterBattleEvent(event, armies)
+        else:
+            return HttpResponse(status=403)  # Access denied. You can only send battle events involving your armies.
+
 
 
 def enterMoveEvent(event):
@@ -367,15 +386,13 @@ def enterMoveEvent(event):
     return HttpResponse(status=200)
 
 
-def enterBattleEvent(event):
-    participants = event['participants']
-    armies = list()
-    for p in participants:
-        pRealm = Realm.objects.filter(tag=p['realm'])[0]
-        participant = Troop.objects.filter(armyId=p['id']).filter(realm=pRealm)[0]
-        armies.append(participant)
-    me = BattleEvent(participants=armies, x=event['x'], y=event['y'], overrun=event['overrun'])
+def enterBattleEvent(event, armies):
+    partips = list()
+    for x in armies:
+        partips.append(x.id)
+    me = BattleEvent(x=event['x'], y=event['y'], overrun=event['overrun'])
     me.save()
+    me.participants = partips
     return HttpResponse(status=200)
 
 
