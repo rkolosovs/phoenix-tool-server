@@ -21,6 +21,7 @@ def armyData(request):
             d['mounts']= -1
             d['lkp']= -1
             d['skp']= -1
+            d['isGuard']= False
         returnData = json.dumps(data)
         return HttpResponse(returnData)
     else:
@@ -38,6 +39,7 @@ def armyData(request):
                     d['mounts']= -1
                     d['lkp']= -1
                     d['skp']= -1
+                    d['isGuard']= False
         returnData = json.dumps(data)
         return HttpResponse(returnData)
 

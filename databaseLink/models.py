@@ -99,6 +99,7 @@ class Truppen(models.Model):
     skp = models.IntegerField()
     x = models.IntegerField()
     y = models.IntegerField()
+    isGuard = models.BooleanField(default = False)
 
     def __str__(self):
         return str(self.reich) + ', ' + str(self.armyId)
