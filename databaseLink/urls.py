@@ -11,6 +11,7 @@ urlpatterns = [
     url(r'^savefielddata/', views.saveFieldData, name='saveFieldData'),
     url(r'^fielddata/', views.fieldData, name='fieldData'),
     url(r'^gettoken/', views.getCSRFToken, name='getCSRFToken'),
+    url(r'^getlastsavedtimestamp/', views.getLastSavedTimeStamp, name='getLastSavedTimeStamp'),
     url(r'^saveriverdata/', views.saveRiverData, name='saveRiverData'),
     url(r'^getriverdata/', views.getRiverData, name='getRiverData'),
     url(r'^saveborderdata/', views.saveBorderData, name='saveBorderData'),

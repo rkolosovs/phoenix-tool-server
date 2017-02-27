@@ -117,6 +117,7 @@ class Troop(models.Model):
     skp = models.IntegerField()
     x = models.IntegerField()
     y = models.IntegerField()
+    isGuard = models.BooleanField(default = False)
 
     def __str__(self):
         return str(self.realm) + ', ' + str(self.armyId) + ', ' + str(self.x) + ', ' + str(self.y)
@@ -254,3 +255,9 @@ class CommentEvent(models.Model):
 
 class LastSavedTimeStamp(models.Model):
     timeStamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "LastSavedTimeStamps"
+
+    def __str__(self):
+        return str(self.pk) + ', ' + str(self.timeStamp)
