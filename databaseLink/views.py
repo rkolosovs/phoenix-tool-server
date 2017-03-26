@@ -360,7 +360,7 @@ def postBattleEvent(request):
     armies = list()
     for p in participants:
         pRealm = Realm.objects.filter(tag=p['realm'])[0]
-        participant = Troop.objects.filter(armyId=p['id']).filter(realm=pRealm)[0]
+        participant = Troop.objects.filter(armyId=p['armyId']).filter(realm=pRealm)[0]
         armies.append(participant)
     if (sessionKey == '0') | (sessionKey is None):
         return HttpResponse(status=401)  # Authorisation failure. Please log in.
@@ -385,7 +385,7 @@ def enterMoveEvent(event):
     realm = serializers.serialize('python', Realm.objects.filter(tag=event['realm']))
     if len(realm) == 0:
         return HttpResponse(status=400)  # Invalid input. Realm given does not exist.
-    army = Troop.objects.filter(armyId=event['id']).filter(realm=realm[0]['pk'])
+    army = Troop.objects.filter(armyId=event['armyId']).filter(realm=realm[0]['pk'])
     if len(army) == 0:
         return HttpResponse(status=400)  # Invalid input. Troop does not exist.
     me = MoveEvent(troop=army[0], x=event['x'], y=event['y'])
