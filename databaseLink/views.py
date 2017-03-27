@@ -96,7 +96,8 @@ def saveRiverData(request):
     listOfData = riverData.split(";")
     for listItem in listOfData:
         xyxy = listItem.split(",")
-        currentRiverData.filter(firstX=xyxy[0]).filter(firstY=xyxy[1]).filter(secondX=xyxy[2]).filter(secondY=xyxy[3]).delete()
+        currentRiverData.filter(firstX=xyxy[0]).filter(firstY=xyxy[1]).filter(secondX=xyxy[2]).\
+            filter(secondY=xyxy[3]).delete()
         print("deleted")
         river = River()
         river.firstX = xyxy[0]
@@ -212,29 +213,31 @@ def saveBorderData(request):
 
 
 def getBorderData(request):
-    all_border_data = serializers.serialize('python', RealmTerritory.objects.all())
-    data = [d['fields'] for d in all_border_data]
-    returnData = json.dumps(data)
-    return HttpResponse(returnData)
+    all_border_data = [d['fields'] for d in serializers.serialize('python', RealmTerritory.objects.all())]
+    realms = [(d['pk'], d['fields']['tag']) for d in serializers.serialize('python', Realm.objects.filter(active=True))]
+    sorted_borders = [[r[1], [[d['x'], d['y']] for d in
+                              list(filter(lambda x: x['realm'] == r[0], all_border_data))]] for r in realms]
+    return HttpResponse(json.dumps([{'tag': d[0], 'land': d[1]} for d in sorted_borders]))
 
 
 def getCurrentTurn(request):
-    latestTurn = TurnEvent.objects.filter(date__isnull=False).latest('date')
-    serializedTurn = [d['fields'] for d in serializers.serialize('python', [latestTurn], fields=('turn', 'status'))]
-    turnOrder = [d['fields'] for d in serializers.serialize('python', [TurnOrder.objects.get(id=[d['turn'] for d in serializedTurn][0])])][0]
-    realmInTurn = getRealmForId(turnOrder)
+    latest_turn = TurnEvent.objects.filter(date__isnull=False).latest('date')
+    serialized_turn = [d['fields'] for d in serializers.serialize('python', [latest_turn], fields=('turn', 'status'))]
+    turn_order = [d['fields'] for d in
+                  serializers.serialize('python', [TurnOrder.objects.get(id=[d['turn'] for d in
+                                                                             serialized_turn][0])])][0]
+    realm_in_turn = getRealmForId(turn_order)
     return HttpResponse(json.dumps({
-        'turn': turnOrder['turnNumber'],
-        'realm': realmInTurn,
-        'status': [d['status'] for d in serializedTurn][0]
+        'turn': turn_order['turnNumber'],
+        'realm': realm_in_turn,
+        'status': [d['status'] for d in serialized_turn][0]
     }), content_type='application/json')
 
 
 def getRiverData(request):
     all_river_data = serializers.serialize('python', River.objects.all())
     data = [d['fields'] for d in all_river_data]
-    returnData = json.dumps(data)
-    return HttpResponse(returnData)
+    return HttpResponse(json.dumps(data))
 
 
 def getCSRFToken(request): ## TODO: funktioniert noch nicht
@@ -246,12 +249,12 @@ class UserFormView(View):
     form_class = UserForm
     template_name = 'databaseLink/accountcreation_form.html'
 
-    #display blank form
+    #  display blank form
     def get(self, request):
         form = self.form_class(None)
         return render(request, self.template_name, {'form': form})
 
-    #process form data
+    #  process form data
     def post(self, request):
         form = self.form_class(request.POST)
 
@@ -259,12 +262,12 @@ class UserFormView(View):
 
             user = form.save(commit=False)
 
-            #cleaned (normalized) data
+            #  cleaned (normalized) data
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
             user.set_password(password)
             user.save()
-            #returns User object if credentials are correct (they should be at this stage)
+            #  returns User object if credentials are correct (they should be at this stage)
             user = authenticate(username=username, password=password)
             if user is not None:
 
@@ -322,9 +325,12 @@ def postNextTurn(request):
     else:
         latestTurn = TurnEvent.objects.filter(date__isnull=False).latest('date')
         serializedTurn = [d['fields'] for d in serializers.serialize('python', [latestTurn], fields=('turn', 'status'))]
-        turnOrder = [d['fields'] for d in serializers.serialize('python', [TurnOrder.objects.get(id=[d['turn'] for d in serializedTurn][0])])][0]
+        turnOrder = [d['fields'] for d in
+                     serializers.serialize('python', [TurnOrder.objects.get(id=[d['turn'] for d in
+                                                                                serializedTurn][0])])][0]
         status = [d['status'] for d in serializedTurn][0]
-        if (getRealmForId(turnOrder) is not None) & (turnOrder['realm'] == realmMembership[0]['fields']['realm']) & (status == 'st'):
+        if (getRealmForId(turnOrder) is not None) & \
+                (turnOrder['realm'] == realmMembership[0]['fields']['realm']) & (status == 'st'):
             try:
                 nextTurn()
                 return getCurrentTurn(None)
@@ -370,7 +376,8 @@ def postBattleEvent(request):
     else:
         # check if user is of correct realm, then enter into db
         allowed = False
-        realmMembership = serializers.serialize('python', RealmMembership.objects.filter(user=user))[0]['fields']['realm']
+        realmMembership = serializers.serialize('python',
+                                                RealmMembership.objects.filter(user=user))[0]['fields']['realm']
         for x in armies:  # check if at least one involved army belongs to an issuing player
             if x.realm.pk == realmMembership:
                 allowed = True
@@ -406,7 +413,9 @@ def enterBattleEvent(event, armies):
 def nextTurn():
     latestTurn = TurnEvent.objects.filter(date__isnull=False).latest('date')
     serializedTurn = [d['fields'] for d in serializers.serialize('python', [latestTurn], fields=('turn', 'status'))]
-    currentTurnOrderElement = [d['fields'] for d in serializers.serialize('python', [TurnOrder.objects.get(id=[d['turn'] for d in serializedTurn][0])])][0]
+    currentTurnOrderElement = [d['fields'] for d in
+                               serializers.serialize('python', [TurnOrder.objects.get(id=[d['turn'] for d in
+                                                                                          serializedTurn][0])])][0]
     turnOrder = currentTurnOrderElement['turnOrder']
     turnNumber = currentTurnOrderElement['turnNumber']
     status = [d['status'] for d in serializedTurn][0]
