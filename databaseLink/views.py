@@ -84,10 +84,14 @@ def saveFieldData(request):
         field.x = typeXY[1]
         field.y = typeXY[2]
         field.save()
+    update_timestamp()
+    return HttpResponse("done")
+
+
+def update_timestamp():
     LastSavedTimeStamp.objects.all().delete()
     saveTime = LastSavedTimeStamp()
     saveTime.save()
-    return HttpResponse("done")
 
 
 def saveRiverData(request):
@@ -105,9 +109,7 @@ def saveRiverData(request):
         river.secondX = xyxy[2]
         river.secondY = xyxy[3]
         river.save()
-    LastSavedTimeStamp.objects.all().delete()
-    saveTime = LastSavedTimeStamp()
-    saveTime.save()
+    update_timestamp()
     return HttpResponse("done")
 
 
@@ -150,9 +152,7 @@ def saveBuildingData(request):
             newBuilding.secondX = building[4]
             newBuilding.secondY = building[5]
             newBuilding.save()
-    LastSavedTimeStamp.objects.all().delete()
-    saveTime = LastSavedTimeStamp()
-    saveTime.save()
+    update_timestamp()
     return HttpResponse("done")
 
 
@@ -183,9 +183,7 @@ def saveArmyData(request):
                 army.y = axyo[7]
                 army.reich = Realm.objects.get(pk=axyo[8])
                 army.save()
-    LastSavedTimeStamp.objects.all().delete()
-    saveTime = LastSavedTimeStamp()
-    saveTime.save()
+    update_timestamp()
     return HttpResponse("done")
 
 
@@ -206,9 +204,7 @@ def saveBorderData(request):
             reichsgebiet.x = xy[0]
             reichsgebiet.y = xy[1]
             reichsgebiet.save()
-    LastSavedTimeStamp.objects.all().delete()
-    saveTime = LastSavedTimeStamp()
-    saveTime.save()
+    update_timestamp()
     return HttpResponse("done")
 
 
@@ -333,6 +329,7 @@ def postNextTurn(request):
                 (turnOrder['realm'] == realmMembership[0]['fields']['realm']) & (status == 'st'):
             try:
                 nextTurn()
+                update_timestamp()
                 return getCurrentTurn(None)
             except TurnOrderException:
                 return HttpResponse(status=520)  # Turn Order ran out. Tell SL to fill it! (custom status code)
@@ -350,6 +347,7 @@ def deleteEvent(request):
             MoveEvent.objects.filter(id=event_id).delete()
         elif event_type == 'battle':
             BattleEvent.objects.filter(id=event_id).delete()
+        update_timestamp()
         return HttpResponse(status=200)
     else:
         return HttpResponse(status=403)  # Access denied. You have to be a SL to do this.
@@ -367,6 +365,7 @@ def checkEvent(request):
         elif event_type == 'battle':
             be = BattleEvent.objects.filter(id=event_id)[0]
             be.processed = True
+        update_timestamp()
         return HttpResponse(status=200)
     else:
         return HttpResponse(status=403)  # Access denied. You have to be a SL to do this.
@@ -471,6 +470,7 @@ def enterMoveEvent(event):
         return HttpResponse(status=400)  # Invalid input. Troop does not exist.
     me = MoveEvent(troop=army[0], x=event['x'], y=event['y'])
     me.save()
+    update_timestamp()
     return HttpResponse(status=200)
 
 
@@ -481,6 +481,7 @@ def enterBattleEvent(event, armies):
     be = BattleEvent(x=event['x'], y=event['y'], overrun=event['overrun'])
     be.save()
     be.participants = partips
+    update_timestamp()
     return HttpResponse(status=200)
 
 
