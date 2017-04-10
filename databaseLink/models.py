@@ -117,7 +117,7 @@ class Troop(models.Model):
     skp = models.IntegerField()
     x = models.IntegerField()
     y = models.IntegerField()
-    isGuard = models.BooleanField(default = False)
+    isGuard = models.BooleanField(default=False)
 
     def __str__(self):
         return str(self.realm) + ', ' + str(self.armyId) + ', ' + str(self.x) + ', ' + str(self.y)

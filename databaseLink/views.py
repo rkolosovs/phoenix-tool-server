@@ -340,6 +340,48 @@ def postNextTurn(request):
             return HttpResponse(status=403)  # Access denied. You can only end your own turn.
 
 
+def getPendingEvents(request):
+    pending_move_events = serializers.serialize('python', MoveEvent.objects.filter(processed=False))
+    pending_battle_events = serializers.serialize('python', BattleEvent.objects.filter(processed=False))
+    json_events = []
+    for e in pending_move_events:
+        army = serializers.serialize('python', Troop.objects.filter(id=(e['fields']['troop'])))[0]['fields']
+        json_events.append(
+        {
+        'type': 'move',
+        'content': {
+            'armyId': army['armyId'],
+            'realm': getRealmForId(army),
+            'x': e['fields']['x'],
+            'y': e['fields']['y']
+        },
+        'pk': e['pk']
+        })
+    for e in pending_battle_events:
+        json_events.append(
+            {
+                'type': 'battle',
+                'content': {
+                    'participants': getParticipants(e['fields']['participants']),
+                    'x': e['fields']['x'],
+                    'y': e['fields']['y']
+                },
+                'pk': e['pk']
+            })
+    return HttpResponse(json.dumps(json_events))
+
+
+def getParticipants(armyPKs):
+    result = []
+    for a in armyPKs:
+        army = serializers.serialize('python', Troop.objects.filter(id=a))[0]['fields']
+        result.append({
+            'armyId': army['armyId'],
+            'realm': getRealmForId(army)
+        })
+    return result
+
+
 def postMoveEvent(request):
     sessionKey = request.POST.get('authorization')
     user = Token.objects.get(key=sessionKey).user
