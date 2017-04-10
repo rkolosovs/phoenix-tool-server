@@ -340,22 +340,54 @@ def postNextTurn(request):
             return HttpResponse(status=403)  # Access denied. You can only end your own turn.
 
 
+def deleteEvent(request):
+    sessionKey = request.POST.get('authorization')
+    user = Token.objects.get(key=sessionKey).user
+    if(user.is_staff):
+        event_id = request.POST.get('eventId')
+        event_type = request.POST.get('eventType')
+        if event_type == 'move':
+            MoveEvent.objects.filter(id=event_id).delete()
+        elif event_type == 'battle':
+            BattleEvent.objects.filter(id=event_id).delete()
+        return HttpResponse(status=200)
+    else:
+        return HttpResponse(status=403)  # Access denied. You have to be a SL to do this.
+
+
+def checkEvent(request):
+    sessionKey = request.POST.get('authorization')
+    user = Token.objects.get(key=sessionKey).user
+    if(user.is_staff):
+        event_id = request.POST.get('eventId')
+        event_type = request.POST.get('eventType')
+        if event_type == 'move':
+            me = MoveEvent.objects.filter(id=event_id)[0]
+            me.processed = True
+        elif event_type == 'battle':
+            be = BattleEvent.objects.filter(id=event_id)[0]
+            be.processed = True
+        return HttpResponse(status=200)
+    else:
+        return HttpResponse(status=403)  # Access denied. You have to be a SL to do this.
+
+
 def getPendingEvents(request):
     pending_move_events = serializers.serialize('python', MoveEvent.objects.filter(processed=False))
     pending_battle_events = serializers.serialize('python', BattleEvent.objects.filter(processed=False))
+    # TODO: Do this for all other types of events (when you come around to using them).
     json_events = []
     for e in pending_move_events:
         army = serializers.serialize('python', Troop.objects.filter(id=(e['fields']['troop'])))[0]['fields']
-        json_events.append(
-        {
-        'type': 'move',
-        'content': {
-            'armyId': army['armyId'],
-            'realm': getRealmForId(army),
-            'x': e['fields']['x'],
-            'y': e['fields']['y']
-        },
-        'pk': e['pk']
+        json_events.append({
+            'type': 'move',
+            'content': {
+                'armyId': army['armyId'],
+                'realm': getRealmForId(army),
+                'x': e['fields']['x'],
+                'y': e['fields']['y']
+            },
+            'pk': e['pk']
         })
     for e in pending_battle_events:
         json_events.append(
@@ -446,9 +478,9 @@ def enterBattleEvent(event, armies):
     partips = list()
     for x in armies:
         partips.append(x.id)
-    me = BattleEvent(x=event['x'], y=event['y'], overrun=event['overrun'])
-    me.save()
-    me.participants = partips
+    be = BattleEvent(x=event['x'], y=event['y'], overrun=event['overrun'])
+    be.save()
+    be.participants = partips
     return HttpResponse(status=200)
 
 
