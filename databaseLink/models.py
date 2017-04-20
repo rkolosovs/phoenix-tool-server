@@ -154,7 +154,6 @@ class BattleEvent(models.Model):
     participants = models.ManyToManyField(Troop)
     x = models.IntegerField()
     y = models.IntegerField()
-    overrun = models.BooleanField(default=False)
     processed = models.BooleanField(default=False)
     date = models.DateTimeField(auto_now_add=True, null=True)
 
