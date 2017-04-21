@@ -139,14 +139,16 @@ class TurnOrder(models.Model):
 class MoveEvent(models.Model):
     # Used to record movement of armies
     troop = models.ForeignKey(Troop, null=True, on_delete=models.SET_NULL)
-    x = models.IntegerField()
-    y = models.IntegerField()
+    from_x = models.IntegerField()
+    from_y = models.IntegerField()
+    to_x = models.IntegerField()
+    to_y = models.IntegerField()
     processed = models.BooleanField(default=False)
     date = models.DateTimeField(auto_now_add=True, null=True)
 
     def __str__(self):
-        return str(self.troop) + ' to ' + str(self.x) + ', ' + str(self.y) + ', ' + str(self.processed) + ', ' + \
-               str(self.date)
+        return str(self.troop.realm) + ', ' + str(self.troop.armyId) + ' from (' + str(self.from_x) + ', ' + str(self.from_y) + '), ' + \
+               'to (' + str(self.to_x) + ', ' + str(self.to_y) + '), ' + str(self.processed) + ', ' + str(self.date)
 
 
 class BattleEvent(models.Model):
