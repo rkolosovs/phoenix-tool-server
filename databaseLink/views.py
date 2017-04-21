@@ -383,14 +383,15 @@ def getPendingEvents(request):
             'content': {
                 'armyId': army['armyId'],
                 'realm': getRealmForId(army),
-                'x': e['fields']['x'],
-                'y': e['fields']['y']
+                'fromX': e['fields']['from_x'],
+                'fromY': e['fields']['from_y'],
+                'toX': e['fields']['to_x'],
+                'toY': e['fields']['to_y']
             },
             'pk': e['pk']
         })
     for e in pending_battle_events:
-        json_events.append(
-            {
+        json_events.append({
                 'type': 'battle',
                 'content': {
                     'participants': getParticipants(e['fields']['participants']),
