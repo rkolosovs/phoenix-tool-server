@@ -73,19 +73,26 @@ def fieldData(request):
 
 
 def saveFieldData(request):
-    currentMapData = Field.objects.all()
-    mapdata = request.POST.get("map")
-    listOfData = mapdata.split(";")
-    for listItem in listOfData:
-        typeXY = listItem.split(",")
-        currentMapData.filter(x=typeXY[1]).filter(y=typeXY[2]).delete()
-        field = Field()
-        field.type = typeXY[0]
-        field.x = typeXY[1]
-        field.y = typeXY[2]
-        field.save()
-    update_timestamp()
-    return HttpResponse("done")
+    sessionKey = request.POST.get('authorization')
+    user = Token.objects.get(key=sessionKey).user
+    if (sessionKey == '0') | (sessionKey is None):
+        return HttpResponse(status=401)  # Authorisation failure. Please log in.
+    elif not user.is_staff:
+        return HttpResponse(status=403)  # Access denied. You have to be SL to do this.
+    else:
+        currentMapData = Field.objects.all()
+        mapdata = request.POST.get("map")
+        listOfData = mapdata.split(";")
+        for listItem in listOfData:
+            typeXY = listItem.split(",")
+            currentMapData.filter(x=typeXY[1]).filter(y=typeXY[2]).delete()
+            field = Field()
+            field.type = typeXY[0]
+            field.x = typeXY[1]
+            field.y = typeXY[2]
+            field.save()
+        update_timestamp()
+        return HttpResponse(status=200)  # Success.
 
 
 def update_timestamp():
@@ -95,73 +102,89 @@ def update_timestamp():
 
 
 def saveRiverData(request):
-    currentRiverData = River.objects.all()
-    riverData = request.POST.get("river")
-    listOfData = riverData.split(";")
-    for listItem in listOfData:
-        xyxy = listItem.split(",")
-        currentRiverData.filter(firstX=xyxy[0]).filter(firstY=xyxy[1]).filter(secondX=xyxy[2]).\
-            filter(secondY=xyxy[3]).delete()
-        print("deleted")
-        river = River()
-        river.firstX = xyxy[0]
-        river.firstY = xyxy[1]
-        river.secondX = xyxy[2]
-        river.secondY = xyxy[3]
-        river.save()
-    update_timestamp()
-    return HttpResponse("done")
+    sessionKey = request.POST.get('authorization')
+    user = Token.objects.get(key=sessionKey).user
+    if (sessionKey == '0') | (sessionKey is None):
+        return HttpResponse(status=401)  # Authorisation failure. Please log in.
+    elif not user.is_staff:
+        return HttpResponse(status=403)  # Access denied. You have to be SL to do this.
+    else:
+        currentRiverData = River.objects.all()
+        riverData = request.POST.get("river")
+        listOfData = riverData.split(";")
+        for listItem in listOfData:
+            xyxy = listItem.split(",")
+            currentRiverData.filter(firstX=xyxy[0]).filter(firstY=xyxy[1]).filter(secondX=xyxy[2]).\
+                filter(secondY=xyxy[3]).delete()
+            print("deleted")
+            river = River()
+            river.firstX = xyxy[0]
+            river.firstY = xyxy[1]
+            river.secondX = xyxy[2]
+            river.secondY = xyxy[3]
+            river.save()
+        update_timestamp()
+        return HttpResponse(status=200)  # Success.
 
 
 def saveBuildingData(request):
-    currentBuildingData = Building.objects.all()
-    buildingData = request.POST.get("buildings")
-    listOfData = buildingData.split(";")
-    for listItem in listOfData:
-        building = listItem.split(",")
-        if int(building[0]) <= 4:
-            currentBuildingData.filter(type=building[0]).filter(reich=building[1]).filter(x=building[2])\
-                .filter(y=building[3]).delete()
-            print("deleted")
-            newBuilding = Building()
-            newBuilding.type = building[0]
-            newBuilding.reich = Realm.objects.get(pk=building[1])
-            newBuilding.x = building[2]
-            newBuilding.y = building[3]
-            newBuilding.save()
-        elif int(building[0]) <= 7:
-            currentBuildingData.filter(type=building[0]).filter(reich=building[1]).filter(x=building[2])\
-                .filter(y=building[3]).filter(direction=building[4]).delete()
-            print("deleted")
-            newBuilding = Building()
-            newBuilding.type = building[0]
-            newBuilding.reich = Realm.objects.get(pk=building[1])
-            newBuilding.x = building[2]
-            newBuilding.y = building[3]
-            newBuilding.direction = building[4]
-            newBuilding.save()
-        elif int(building[0]) <= 8:
-            currentBuildingData.filter(type=building[0]).filter(reich=building[1]).filter(firstX=building[2])\
-                .filter(firstY=building[3]).filter(secondX=building[4]).filter(secondY=building[5]).delete()
-            print("deleted")
-            newBuilding = Building()
-            newBuilding.type = building[0]
-            newBuilding.reich = Realm.objects.get(pk= building[1])
-            newBuilding.firstX = building[2]
-            newBuilding.firstY = building[3]
-            newBuilding.secondX = building[4]
-            newBuilding.secondY = building[5]
-            newBuilding.save()
-    update_timestamp()
-    return HttpResponse("done")
+    sessionKey = request.POST.get('authorization')
+    user = Token.objects.get(key=sessionKey).user
+    if (sessionKey == '0') | (sessionKey is None):
+        return HttpResponse(status=401)  # Authorisation failure. Please log in.
+    elif not user.is_staff:
+        return HttpResponse(status=403)  # Access denied. You have to be SL to do this.
+    else:
+        currentBuildingData = Building.objects.all()
+        buildingData = request.POST.get("buildings")
+        listOfData = buildingData.split(";")
+        for listItem in listOfData:
+            building = listItem.split(",")
+            if int(building[0]) <= 4:
+                currentBuildingData.filter(type=building[0]).filter(reich=building[1]).filter(x=building[2])\
+                    .filter(y=building[3]).delete()
+                print("deleted")
+                newBuilding = Building()
+                newBuilding.type = building[0]
+                newBuilding.reich = Realm.objects.get(pk=building[1])
+                newBuilding.x = building[2]
+                newBuilding.y = building[3]
+                newBuilding.save()
+            elif int(building[0]) <= 7:
+                currentBuildingData.filter(type=building[0]).filter(reich=building[1]).filter(x=building[2])\
+                    .filter(y=building[3]).filter(direction=building[4]).delete()
+                print("deleted")
+                newBuilding = Building()
+                newBuilding.type = building[0]
+                newBuilding.reich = Realm.objects.get(pk=building[1])
+                newBuilding.x = building[2]
+                newBuilding.y = building[3]
+                newBuilding.direction = building[4]
+                newBuilding.save()
+            elif int(building[0]) <= 8:
+                currentBuildingData.filter(type=building[0]).filter(reich=building[1]).filter(firstX=building[2])\
+                    .filter(firstY=building[3]).filter(secondX=building[4]).filter(secondY=building[5]).delete()
+                print("deleted")
+                newBuilding = Building()
+                newBuilding.type = building[0]
+                newBuilding.reich = Realm.objects.get(pk= building[1])
+                newBuilding.firstX = building[2]
+                newBuilding.firstY = building[3]
+                newBuilding.secondX = building[4]
+                newBuilding.secondY = building[5]
+                newBuilding.save()
+        update_timestamp()
+        return HttpResponse(status=200)  # Success.
 
 
 def saveArmyData(request):
     sessionKey = request.POST.get('authorization')
+    user = Token.objects.get(key=sessionKey).user
     if (sessionKey == '0') | (sessionKey is None):
-        pass
+        return HttpResponse(status=401)  # Authorisation failure. Please log in.
+    elif not user.is_staff:
+        return HttpResponse(status=403)  # Access denied. You have to be SL to do this.
     else:
-        user = Token.objects.get(key=sessionKey).user
         reich = RealmMembership.objects.get(user=user).reich
         currentArmyData = Troop.objects.all()
         armydata = request.POST.get("armies")
@@ -183,29 +206,36 @@ def saveArmyData(request):
                 army.y = axyo[7]
                 army.reich = Realm.objects.get(pk=axyo[8])
                 army.save()
-    update_timestamp()
-    return HttpResponse("done")
+        update_timestamp()
+        return HttpResponse(status=200)  # Success.
 
 
 def saveBorderData(request):
-    currentBorderData = RealmTerritory.objects.all()
-    borderdata = request.POST.get("borders")
-    listOfData = borderdata.split(";")
-    for listItem in listOfData:
-        reichfieldlist = listItem.split(":")
-        owner = Realm.objects.get(name=reichfieldlist[0])
-        fields = reichfieldlist[1].split(",")
-        for field in fields:
-            xy = field.split("/")
-            currentBorderData.filter(x=xy[0]).filter(y=xy[1]).delete()
-            print("deleted")
-            reichsgebiet = RealmTerritory()
-            reichsgebiet.reich = owner
-            reichsgebiet.x = xy[0]
-            reichsgebiet.y = xy[1]
-            reichsgebiet.save()
-    update_timestamp()
-    return HttpResponse("done")
+    sessionKey = request.POST.get('authorization')
+    user = Token.objects.get(key=sessionKey).user
+    if (sessionKey == '0') | (sessionKey is None):
+        return HttpResponse(status=401)  # Authorisation failure. Please log in.
+    elif not user.is_staff:
+        return HttpResponse(status=403)  # Access denied. You have to be SL to do this.
+    else:
+        currentBorderData = RealmTerritory.objects.all()
+        borderdata = request.POST.get("borders")
+        listOfData = borderdata.split(";")
+        for listItem in listOfData:
+            reichfieldlist = listItem.split(":")
+            owner = Realm.objects.get(name=reichfieldlist[0])
+            fields = reichfieldlist[1].split(",")
+            for field in fields:
+                xy = field.split("/")
+                currentBorderData.filter(x=xy[0]).filter(y=xy[1]).delete()
+                print("deleted")
+                reichsgebiet = RealmTerritory()
+                reichsgebiet.reich = owner
+                reichsgebiet.x = xy[0]
+                reichsgebiet.y = xy[1]
+                reichsgebiet.save()
+        update_timestamp()
+        return HttpResponse(status=200)  # Success.
 
 
 def getBorderData(request):
