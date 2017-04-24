@@ -377,7 +377,7 @@ def deleteEvent(request):
             MoveEvent.objects.filter(id=event_id).delete()
         elif event_type == 'battle':
             BattleEvent.objects.filter(id=event_id).delete()
-        update_timestamp()
+        # update_timestamp()
         return HttpResponse(status=200)
     else:
         return HttpResponse(status=403)  # Access denied. You have to be a SL to do this.
@@ -398,7 +398,7 @@ def checkEvent(request):
             be = BattleEvent.objects.filter(id=event_id)[0]
             be.processed = True
             be.save()
-        update_timestamp()
+        # update_timestamp()
         return HttpResponse(status=200)
     else:
         return HttpResponse(status=403)  # Access denied. You have to be a SL to do this.
