@@ -389,12 +389,15 @@ def checkEvent(request):
     if(user.is_staff):
         event_id = request.POST.get('eventId')
         event_type = request.POST.get('eventType')
+        # TODO: Do this for all other types of events (when you come around to using them).
         if event_type == 'move':
             me = MoveEvent.objects.filter(id=event_id)[0]
             me.processed = True
+            me.save()
         elif event_type == 'battle':
             be = BattleEvent.objects.filter(id=event_id)[0]
             be.processed = True
+            be.save()
         update_timestamp()
         return HttpResponse(status=200)
     else:
