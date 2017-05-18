@@ -195,17 +195,19 @@ def saveArmyData(request):
                 print(listItem)
                 currentArmyData.filter(armyId=axyo[0]).filter(reich=Realm.objects.get(pk=axyo[8])).delete()
                 print("deleted")
-                army = Troop()
-                army.armyId = axyo[0]
-                army.count = axyo[1]
-                army.leaders = axyo[2]
-                army.lkp = axyo[3]
-                army.skp = axyo[4]
-                army.mounts = axyo[5]
-                army.x = axyo[6]
-                army.y = axyo[7]
-                army.reich = Realm.objects.get(pk=axyo[8])
-                army.save()
+                # Don't re-insert empty armies
+                if axyo[1] == 0 & axyo[2] == 0 & axyo[3] == 0 & axyo[4] == 0 & axyo[5] == 0:
+                    army = Troop()
+                    army.armyId = axyo[0]
+                    army.count = axyo[1]
+                    army.leaders = axyo[2]
+                    army.lkp = axyo[3]
+                    army.skp = axyo[4]
+                    army.mounts = axyo[5]
+                    army.x = axyo[6]
+                    army.y = axyo[7]
+                    army.reich = Realm.objects.get(pk=axyo[8])
+                    army.save()
         update_timestamp()
         return HttpResponse(status=200)  # Success.
 
