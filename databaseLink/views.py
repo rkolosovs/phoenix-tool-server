@@ -111,6 +111,7 @@ def saveRiverData(request):
 
 
 def saveBuildingData(request):
+    #just a test
     currentBuildingData = Building.objects.all()
     buildingData = request.POST.get("buildings")
     listOfData = buildingData.split(";")
