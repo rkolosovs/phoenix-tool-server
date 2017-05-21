@@ -73,95 +73,119 @@ def fieldData(request):
 
 
 def saveFieldData(request):
-    currentMapData = Field.objects.all()
-    mapdata = request.POST.get("map")
-    listOfData = mapdata.split(";")
-    for listItem in listOfData:
-        typeXY = listItem.split(",")
-        currentMapData.filter(x=typeXY[1]).filter(y=typeXY[2]).delete()
-        field = Field()
-        field.type = typeXY[0]
-        field.x = typeXY[1]
-        field.y = typeXY[2]
-        field.save()
+    sessionKey = request.POST.get('authorization')
+    user = Token.objects.get(key=sessionKey).user
+    if (sessionKey == '0') | (sessionKey is None):
+        return HttpResponse(status=401)  # Authorisation failure. Please log in.
+    elif not user.is_staff:
+        return HttpResponse(status=403)  # Access denied. You have to be SL to do this.
+    else:
+        currentMapData = Field.objects.all()
+        mapdata = request.POST.get("map")
+        listOfData = mapdata.split(";")
+        for listItem in listOfData:
+            typeXY = listItem.split(",")
+            currentMapData.filter(x=typeXY[1]).filter(y=typeXY[2]).delete()
+            field = Field()
+            field.type = typeXY[0]
+            field.x = typeXY[1]
+            field.y = typeXY[2]
+            field.save()
+        update_timestamp()
+        return HttpResponse(status=200)  # Success.
+
+
+def update_timestamp():
     LastSavedTimeStamp.objects.all().delete()
     saveTime = LastSavedTimeStamp()
     saveTime.save()
-    return HttpResponse("done")
 
 
 def saveRiverData(request):
-    currentRiverData = River.objects.all()
-    riverData = request.POST.get("river")
-    listOfData = riverData.split(";")
-    for listItem in listOfData:
-        xyxy = listItem.split(",")
-        currentRiverData.filter(firstX=xyxy[0]).filter(firstY=xyxy[1]).filter(secondX=xyxy[2]).filter(secondY=xyxy[3]).delete()
-        print("deleted")
-        river = River()
-        river.firstX = xyxy[0]
-        river.firstY = xyxy[1]
-        river.secondX = xyxy[2]
-        river.secondY = xyxy[3]
-        river.save()
-    LastSavedTimeStamp.objects.all().delete()
-    saveTime = LastSavedTimeStamp()
-    saveTime.save()
-    return HttpResponse("done")
+    sessionKey = request.POST.get('authorization')
+    user = Token.objects.get(key=sessionKey).user
+    if (sessionKey == '0') | (sessionKey is None):
+        return HttpResponse(status=401)  # Authorisation failure. Please log in.
+    elif not user.is_staff:
+        return HttpResponse(status=403)  # Access denied. You have to be SL to do this.
+    else:
+        currentRiverData = River.objects.all()
+        riverData = request.POST.get("river")
+        listOfData = riverData.split(";")
+        for listItem in listOfData:
+            xyxy = listItem.split(",")
+            currentRiverData.filter(firstX=xyxy[0]).filter(firstY=xyxy[1]).filter(secondX=xyxy[2]).\
+                filter(secondY=xyxy[3]).delete()
+            print("deleted")
+            river = River()
+            river.firstX = xyxy[0]
+            river.firstY = xyxy[1]
+            river.secondX = xyxy[2]
+            river.secondY = xyxy[3]
+            river.save()
+        update_timestamp()
+        return HttpResponse(status=200)  # Success.
 
 
 def saveBuildingData(request):
-    #just a test
-    currentBuildingData = Building.objects.all()
-    buildingData = request.POST.get("buildings")
-    listOfData = buildingData.split(";")
-    for listItem in listOfData:
-        building = listItem.split(",")
-        if int(building[0]) <= 4:
-            currentBuildingData.filter(type=building[0]).filter(reich=building[1]).filter(x=building[2])\
-                .filter(y=building[3]).delete()
-            print("deleted")
-            newBuilding = Building()
-            newBuilding.type = building[0]
-            newBuilding.reich = Realm.objects.get(pk=building[1])
-            newBuilding.x = building[2]
-            newBuilding.y = building[3]
-            newBuilding.save()
-        elif int(building[0]) <= 7:
-            currentBuildingData.filter(type=building[0]).filter(reich=building[1]).filter(x=building[2])\
-                .filter(y=building[3]).filter(direction=building[4]).delete()
-            print("deleted")
-            newBuilding = Building()
-            newBuilding.type = building[0]
-            newBuilding.reich = Realm.objects.get(pk=building[1])
-            newBuilding.x = building[2]
-            newBuilding.y = building[3]
-            newBuilding.direction = building[4]
-            newBuilding.save()
-        elif int(building[0]) <= 8:
-            currentBuildingData.filter(type=building[0]).filter(reich=building[1]).filter(firstX=building[2])\
-                .filter(firstY=building[3]).filter(secondX=building[4]).filter(secondY=building[5]).delete()
-            print("deleted")
-            newBuilding = Building()
-            newBuilding.type = building[0]
-            newBuilding.reich = Realm.objects.get(pk= building[1])
-            newBuilding.firstX = building[2]
-            newBuilding.firstY = building[3]
-            newBuilding.secondX = building[4]
-            newBuilding.secondY = building[5]
-            newBuilding.save()
-    LastSavedTimeStamp.objects.all().delete()
-    saveTime = LastSavedTimeStamp()
-    saveTime.save()
-    return HttpResponse("done")
+
+    sessionKey = request.POST.get('authorization')
+    user = Token.objects.get(key=sessionKey).user
+    if (sessionKey == '0') | (sessionKey is None):
+        return HttpResponse(status=401)  # Authorisation failure. Please log in.
+    elif not user.is_staff:
+        return HttpResponse(status=403)  # Access denied. You have to be SL to do this.
+    else:
+        currentBuildingData = Building.objects.all()
+        buildingData = request.POST.get("buildings")
+        listOfData = buildingData.split(";")
+        for listItem in listOfData:
+            building = listItem.split(",")
+            if int(building[0]) <= 4:
+                currentBuildingData.filter(type=building[0]).filter(reich=building[1]).filter(x=building[2])\
+                    .filter(y=building[3]).delete()
+                print("deleted")
+                newBuilding = Building()
+                newBuilding.type = building[0]
+                newBuilding.reich = Realm.objects.get(pk=building[1])
+                newBuilding.x = building[2]
+                newBuilding.y = building[3]
+                newBuilding.save()
+            elif int(building[0]) <= 7:
+                currentBuildingData.filter(type=building[0]).filter(reich=building[1]).filter(x=building[2])\
+                    .filter(y=building[3]).filter(direction=building[4]).delete()
+                print("deleted")
+                newBuilding = Building()
+                newBuilding.type = building[0]
+                newBuilding.reich = Realm.objects.get(pk=building[1])
+                newBuilding.x = building[2]
+                newBuilding.y = building[3]
+                newBuilding.direction = building[4]
+                newBuilding.save()
+            elif int(building[0]) <= 8:
+                currentBuildingData.filter(type=building[0]).filter(reich=building[1]).filter(firstX=building[2])\
+                    .filter(firstY=building[3]).filter(secondX=building[4]).filter(secondY=building[5]).delete()
+                print("deleted")
+                newBuilding = Building()
+                newBuilding.type = building[0]
+                newBuilding.reich = Realm.objects.get(pk= building[1])
+                newBuilding.firstX = building[2]
+                newBuilding.firstY = building[3]
+                newBuilding.secondX = building[4]
+                newBuilding.secondY = building[5]
+                newBuilding.save()
+        update_timestamp()
+        return HttpResponse(status=200)  # Success.
 
 
 def saveArmyData(request):
     sessionKey = request.POST.get('authorization')
+    user = Token.objects.get(key=sessionKey).user
     if (sessionKey == '0') | (sessionKey is None):
-        pass
+        return HttpResponse(status=401)  # Authorisation failure. Please log in.
+    elif not user.is_staff:
+        return HttpResponse(status=403)  # Access denied. You have to be SL to do this.
     else:
-        user = Token.objects.get(key=sessionKey).user
         reich = RealmMembership.objects.get(user=user).reich
         currentArmyData = Troop.objects.all()
         armydata = request.POST.get("armies")
@@ -172,70 +196,77 @@ def saveArmyData(request):
                 print(listItem)
                 currentArmyData.filter(armyId=axyo[0]).filter(reich=Realm.objects.get(pk=axyo[8])).delete()
                 print("deleted")
-                army = Troop()
-                army.armyId = axyo[0]
-                army.count = axyo[1]
-                army.leaders = axyo[2]
-                army.lkp = axyo[3]
-                army.skp = axyo[4]
-                army.mounts = axyo[5]
-                army.x = axyo[6]
-                army.y = axyo[7]
-                army.reich = Realm.objects.get(pk=axyo[8])
-                army.save()
-    LastSavedTimeStamp.objects.all().delete()
-    saveTime = LastSavedTimeStamp()
-    saveTime.save()
-    return HttpResponse("done")
+                # Don't re-insert empty armies
+                if axyo[1] == 0 & axyo[2] == 0 & axyo[3] == 0 & axyo[4] == 0 & axyo[5] == 0:
+                    army = Troop()
+                    army.armyId = axyo[0]
+                    army.count = axyo[1]
+                    army.leaders = axyo[2]
+                    army.lkp = axyo[3]
+                    army.skp = axyo[4]
+                    army.mounts = axyo[5]
+                    army.x = axyo[6]
+                    army.y = axyo[7]
+                    army.reich = Realm.objects.get(pk=axyo[8])
+                    army.save()
+        update_timestamp()
+        return HttpResponse(status=200)  # Success.
 
 
 def saveBorderData(request):
-    currentBorderData = RealmTerritory.objects.all()
-    borderdata = request.POST.get("borders")
-    listOfData = borderdata.split(";")
-    for listItem in listOfData:
-        reichfieldlist = listItem.split(":")
-        owner = Realm.objects.get(name=reichfieldlist[0])
-        fields = reichfieldlist[1].split(",")
-        for field in fields:
-            xy = field.split("/")
-            currentBorderData.filter(x=xy[0]).filter(y=xy[1]).delete()
-            print("deleted")
-            reichsgebiet = RealmTerritory()
-            reichsgebiet.reich = owner
-            reichsgebiet.x = xy[0]
-            reichsgebiet.y = xy[1]
-            reichsgebiet.save()
-    LastSavedTimeStamp.objects.all().delete()
-    saveTime = LastSavedTimeStamp()
-    saveTime.save()
-    return HttpResponse("done")
+    sessionKey = request.POST.get('authorization')
+    user = Token.objects.get(key=sessionKey).user
+    if (sessionKey == '0') | (sessionKey is None):
+        return HttpResponse(status=401)  # Authorisation failure. Please log in.
+    elif not user.is_staff:
+        return HttpResponse(status=403)  # Access denied. You have to be SL to do this.
+    else:
+        currentBorderData = RealmTerritory.objects.all()
+        borderdata = request.POST.get("borders")
+        listOfData = borderdata.split(";")
+        for listItem in listOfData:
+            reichfieldlist = listItem.split(":")
+            owner = Realm.objects.get(name=reichfieldlist[0])
+            fields = reichfieldlist[1].split(",")
+            for field in fields:
+                xy = field.split("/")
+                currentBorderData.filter(x=xy[0]).filter(y=xy[1]).delete()
+                print("deleted")
+                reichsgebiet = RealmTerritory()
+                reichsgebiet.reich = owner
+                reichsgebiet.x = xy[0]
+                reichsgebiet.y = xy[1]
+                reichsgebiet.save()
+        update_timestamp()
+        return HttpResponse(status=200)  # Success.
 
 
 def getBorderData(request):
-    all_border_data = serializers.serialize('python', RealmTerritory.objects.all())
-    data = [d['fields'] for d in all_border_data]
-    returnData = json.dumps(data)
-    return HttpResponse(returnData)
+    all_border_data = [d['fields'] for d in serializers.serialize('python', RealmTerritory.objects.all())]
+    realms = [(d['pk'], d['fields']['tag']) for d in serializers.serialize('python', Realm.objects.filter(active=True))]
+    sorted_borders = [[r[1], [[d['x'], d['y']] for d in
+                              list(filter(lambda x: x['realm'] == r[0], all_border_data))]] for r in realms]
+    return HttpResponse(json.dumps([{'tag': d[0], 'land': d[1]} for d in sorted_borders]))
 
 
 def getCurrentTurn(request):
-    latestTurn = TurnEvent.objects.filter(date__isnull=False).latest('date')
-    serializedTurn = [d['fields'] for d in serializers.serialize('python', [latestTurn], fields=('turn', 'status'))]
-    turnOrder = [d['fields'] for d in serializers.serialize('python', [TurnOrder.objects.get(id=[d['turn'] for d in serializedTurn][0])])][0]
-    realmInTurn = getRealmForId(turnOrder)
+    latest_turn = TurnEvent.objects.filter(date__isnull=False).latest('date')
+    serialized_turn = [d['fields'] for d in serializers.serialize('python', [latest_turn], fields=('turn', 'status'))]
+    turn_order = [d['fields'] for d in
+                  serializers.serialize('python', [TurnOrder.objects.get(id=[d['turn'] for d in
+                                                                             serialized_turn][0])])][0]
+    realm_in_turn = getRealmForId(turn_order)
     return HttpResponse(json.dumps({
-        'turn': turnOrder['turnNumber'],
-        'realm': realmInTurn,
-        'status': [d['status'] for d in serializedTurn][0]
+        'turn': turn_order['turnNumber'],
+        'realm': realm_in_turn,
+        'status': [d['status'] for d in serialized_turn][0]
     }), content_type='application/json')
 
 
 def getRiverData(request):
     all_river_data = serializers.serialize('python', River.objects.all())
     data = [d['fields'] for d in all_river_data]
-    returnData = json.dumps(data)
-    return HttpResponse(returnData)
+    return HttpResponse(json.dumps(data))
 
 
 def getCSRFToken(request): ## TODO: funktioniert noch nicht
@@ -247,12 +278,12 @@ class UserFormView(View):
     form_class = UserForm
     template_name = 'databaseLink/accountcreation_form.html'
 
-    #display blank form
+    #  display blank form
     def get(self, request):
         form = self.form_class(None)
         return render(request, self.template_name, {'form': form})
 
-    #process form data
+    #  process form data
     def post(self, request):
         form = self.form_class(request.POST)
 
@@ -260,12 +291,12 @@ class UserFormView(View):
 
             user = form.save(commit=False)
 
-            #cleaned (normalized) data
+            #  cleaned (normalized) data
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
             user.set_password(password)
             user.save()
-            #returns User object if credentials are correct (they should be at this stage)
+            #  returns User object if credentials are correct (they should be at this stage)
             user = authenticate(username=username, password=password)
             if user is not None:
 
@@ -323,16 +354,100 @@ def postNextTurn(request):
     else:
         latestTurn = TurnEvent.objects.filter(date__isnull=False).latest('date')
         serializedTurn = [d['fields'] for d in serializers.serialize('python', [latestTurn], fields=('turn', 'status'))]
-        turnOrder = [d['fields'] for d in serializers.serialize('python', [TurnOrder.objects.get(id=[d['turn'] for d in serializedTurn][0])])][0]
+        turnOrder = [d['fields'] for d in
+                     serializers.serialize('python', [TurnOrder.objects.get(id=[d['turn'] for d in
+                                                                                serializedTurn][0])])][0]
         status = [d['status'] for d in serializedTurn][0]
-        if (getRealmForId(turnOrder) is not None) & (turnOrder['realm'] == realmMembership[0]['fields']['realm']) & (status == 'st'):
+        if (getRealmForId(turnOrder) is not None) & \
+                (turnOrder['realm'] == realmMembership[0]['fields']['realm']) & (status == 'st'):
             try:
                 nextTurn()
+                update_timestamp()
                 return getCurrentTurn(None)
             except TurnOrderException:
                 return HttpResponse(status=520)  # Turn Order ran out. Tell SL to fill it! (custom status code)
         else:
             return HttpResponse(status=403)  # Access denied. You can only end your own turn.
+
+
+def deleteEvent(request):
+    sessionKey = request.POST.get('authorization')
+    user = Token.objects.get(key=sessionKey).user
+    if(user.is_staff):
+        event_id = request.POST.get('eventId')
+        event_type = request.POST.get('eventType')
+        if event_type == 'move':
+            MoveEvent.objects.filter(id=event_id).delete()
+        elif event_type == 'battle':
+            BattleEvent.objects.filter(id=event_id).delete()
+        # update_timestamp()
+        return HttpResponse(status=200)
+    else:
+        return HttpResponse(status=403)  # Access denied. You have to be a SL to do this.
+
+
+def checkEvent(request):
+    sessionKey = request.POST.get('authorization')
+    user = Token.objects.get(key=sessionKey).user
+    if(user.is_staff):
+        event_id = request.POST.get('eventId')
+        event_type = request.POST.get('eventType')
+        # TODO: Do this for all other types of events (when you come around to using them).
+        if event_type == 'move':
+            me = MoveEvent.objects.filter(id=event_id)[0]
+            me.processed = True
+            me.save()
+        elif event_type == 'battle':
+            be = BattleEvent.objects.filter(id=event_id)[0]
+            be.processed = True
+            be.save()
+        # update_timestamp()
+        return HttpResponse(status=200)
+    else:
+        return HttpResponse(status=403)  # Access denied. You have to be a SL to do this.
+
+
+def getPendingEvents(request):
+    pending_move_events = serializers.serialize('python', MoveEvent.objects.filter(processed=False))
+    pending_battle_events = serializers.serialize('python', BattleEvent.objects.filter(processed=False))
+    # TODO: Do this for all other types of events (when you come around to using them).
+    json_events = []
+    for e in pending_move_events:
+        army = serializers.serialize('python', Troop.objects.filter(id=(e['fields']['troop'])))[0]['fields']
+        json_events.append({
+            'type': 'move',
+            'content': {
+                'armyId': army['armyId'],
+                'realm': getRealmForId(army),
+                'fromX': e['fields']['from_x'],
+                'fromY': e['fields']['from_y'],
+                'toX': e['fields']['to_x'],
+                'toY': e['fields']['to_y']
+            },
+            'pk': e['pk']
+        })
+    for e in pending_battle_events:
+        json_events.append({
+                'type': 'battle',
+                'content': {
+                    'participants': getParticipants(e['fields']['participants']),
+                    'x': e['fields']['x'],
+                    'y': e['fields']['y']
+                },
+                'pk': e['pk']
+            })
+    return HttpResponse(json.dumps(json_events))
+
+
+def getParticipants(armyPKs):
+    result = []
+    for a in armyPKs:
+        army = serializers.serialize('python', Troop.objects.filter(id=a))[0]['fields']
+        result.append({
+            'armyId': army['armyId'],
+            'realm': getRealmForId(army)
+        })
+    return result
 
 
 def postMoveEvent(request):
@@ -361,7 +476,7 @@ def postBattleEvent(request):
     armies = list()
     for p in participants:
         pRealm = Realm.objects.filter(tag=p['realm'])[0]
-        participant = Troop.objects.filter(armyId=p['id']).filter(realm=pRealm)[0]
+        participant = Troop.objects.filter(armyId=p['armyId']).filter(realm=pRealm)[0]
         armies.append(participant)
     if (sessionKey == '0') | (sessionKey is None):
         return HttpResponse(status=401)  # Authorisation failure. Please log in.
@@ -371,7 +486,8 @@ def postBattleEvent(request):
     else:
         # check if user is of correct realm, then enter into db
         allowed = False
-        realmMembership = serializers.serialize('python', RealmMembership.objects.filter(user=user))[0]['fields']['realm']
+        realmMembership = serializers.serialize('python',
+                                                RealmMembership.objects.filter(user=user))[0]['fields']['realm']
         for x in armies:  # check if at least one involved army belongs to an issuing player
             if x.realm.pk == realmMembership:
                 allowed = True
@@ -386,11 +502,12 @@ def enterMoveEvent(event):
     realm = serializers.serialize('python', Realm.objects.filter(tag=event['realm']))
     if len(realm) == 0:
         return HttpResponse(status=400)  # Invalid input. Realm given does not exist.
-    army = Troop.objects.filter(armyId=event['id']).filter(realm=realm[0]['pk'])
+    army = Troop.objects.filter(armyId=event['armyId']).filter(realm=realm[0]['pk'])
     if len(army) == 0:
         return HttpResponse(status=400)  # Invalid input. Troop does not exist.
-    me = MoveEvent(troop=army[0], x=event['x'], y=event['y'])
+    me = MoveEvent(troop=army[0], from_x=event['fromX'], from_y=event['fromY'], to_x=event['toX'], to_y=event['toY'])
     me.save()
+    update_timestamp()
     return HttpResponse(status=200)
 
 
@@ -398,16 +515,19 @@ def enterBattleEvent(event, armies):
     partips = list()
     for x in armies:
         partips.append(x.id)
-    me = BattleEvent(x=event['x'], y=event['y'], overrun=event['overrun'])
-    me.save()
-    me.participants = partips
+    be = BattleEvent(x=event['x'], y=event['y'])
+    be.save()
+    be.participants = partips
+    update_timestamp()
     return HttpResponse(status=200)
 
 
 def nextTurn():
     latestTurn = TurnEvent.objects.filter(date__isnull=False).latest('date')
     serializedTurn = [d['fields'] for d in serializers.serialize('python', [latestTurn], fields=('turn', 'status'))]
-    currentTurnOrderElement = [d['fields'] for d in serializers.serialize('python', [TurnOrder.objects.get(id=[d['turn'] for d in serializedTurn][0])])][0]
+    currentTurnOrderElement = [d['fields'] for d in
+                               serializers.serialize('python', [TurnOrder.objects.get(id=[d['turn'] for d in
+                                                                                          serializedTurn][0])])][0]
     turnOrder = currentTurnOrderElement['turnOrder']
     turnNumber = currentTurnOrderElement['turnNumber']
     status = [d['status'] for d in serializedTurn][0]
