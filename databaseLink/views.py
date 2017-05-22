@@ -112,6 +112,7 @@ def saveRiverData(request):
         currentRiverData = River.objects.all()
         riverData = request.POST.get("river")
         listOfData = riverData.split(";")
+        riversToSave = [];
         for listItem in listOfData:
             xyxy = listItem.split(",")
             currentRiverData.filter(firstX=xyxy[0]).filter(firstY=xyxy[1]).filter(secondX=xyxy[2]).\
@@ -123,12 +124,14 @@ def saveRiverData(request):
             river.secondX = xyxy[2]
             river.secondY = xyxy[3]
             river.save()
+            riversToSave.append(river.pk)
+        currentRiverData = River.objects.all()
+        currentRiverData.exclude(pk__in = riversToSave).delete()
         update_timestamp()
         return HttpResponse(status=200)  # Success.
 
 
 def saveBuildingData(request):
-
     sessionKey = request.POST.get('authorization')
     user = Token.objects.get(key=sessionKey).user
     if (sessionKey == '0') | (sessionKey is None):
@@ -141,39 +144,65 @@ def saveBuildingData(request):
         listOfData = buildingData.split(";")
         for listItem in listOfData:
             building = listItem.split(",")
-            if int(building[0]) <= 4:
-                currentBuildingData.filter(type=building[0]).filter(reich=building[1]).filter(x=building[2])\
-                    .filter(y=building[3]).delete()
-                print("deleted")
-                newBuilding = Building()
-                newBuilding.type = building[0]
-                newBuilding.reich = Realm.objects.get(pk=building[1])
-                newBuilding.x = building[2]
-                newBuilding.y = building[3]
-                newBuilding.save()
-            elif int(building[0]) <= 7:
-                currentBuildingData.filter(type=building[0]).filter(reich=building[1]).filter(x=building[2])\
-                    .filter(y=building[3]).filter(direction=building[4]).delete()
-                print("deleted")
-                newBuilding = Building()
-                newBuilding.type = building[0]
-                newBuilding.reich = Realm.objects.get(pk=building[1])
-                newBuilding.x = building[2]
-                newBuilding.y = building[3]
-                newBuilding.direction = building[4]
-                newBuilding.save()
-            elif int(building[0]) <= 8:
-                currentBuildingData.filter(type=building[0]).filter(reich=building[1]).filter(firstX=building[2])\
-                    .filter(firstY=building[3]).filter(secondX=building[4]).filter(secondY=building[5]).delete()
-                print("deleted")
-                newBuilding = Building()
-                newBuilding.type = building[0]
-                newBuilding.reich = Realm.objects.get(pk= building[1])
-                newBuilding.firstX = building[2]
-                newBuilding.firstY = building[3]
-                newBuilding.secondX = building[4]
-                newBuilding.secondY = building[5]
-                newBuilding.save()
+            for listItem in listOfData:
+                building = listItem.split(",")
+                buildingLength = len(building)
+                if building[buildingLength - 1] == "true":
+                    if int(building[0]) <= 4:
+                        newBuilding = currentBuildingData.exclude(type=5).exclude(type=6).exclude(type=7).exclude(
+                            type=8) \
+                            .filter(realm=building[1]).filter(x=building[2]).filter(y=building[3])
+                        if len(newBuilding) == 1:
+                            newBuilding = newBuilding[0]
+                        else:
+                            newBuilding = Building()
+                        newBuilding.type = building[0]
+                        newBuilding.realm = Realm.objects.get(pk=building[1])
+                        newBuilding.x = building[2]
+                        newBuilding.y = building[3]
+                        newBuilding.save()
+                    elif int(building[0]) <= 7:
+                        newBuilding = currentBuildingData.filter(type=building[0]).filter(realm=building[1]) \
+                            .filter(x=building[2]).filter(y=building[3]).filter(direction=building[4])
+                        if len(newBuilding) == 1:
+                            newBuilding = newBuilding[0]
+                        else:
+                            newBuilding = Building()
+                        newBuilding.type = building[0]
+                        newBuilding.realm = Realm.objects.get(pk=building[1])
+                        newBuilding.x = building[2]
+                        newBuilding.y = building[3]
+                        newBuilding.direction = building[4]
+                        newBuilding.save()
+                    elif int(building[0]) == 8:
+                        newBuilding = currentBuildingData.filter(type=8).filter(realm=building[1]).filter(
+                            firstX=building[2]) \
+                            .filter(firstY=building[3]).filter(secondX=building[4]).filter(secondY=building[5])
+                        if len(newBuilding) == 1:
+                            newBuilding = newBuilding[0]
+                        else:
+                            newBuilding = Building()
+                        newBuilding.type = building[0]
+                        newBuilding.realm = Realm.objects.get(pk=building[1])
+                        newBuilding.firstX = building[2]
+                        newBuilding.firstY = building[3]
+                        newBuilding.secondX = building[4]
+                        newBuilding.secondY = building[5]
+                        newBuilding.save()
+                elif building[buildingLength - 1] == "false":
+                    if int(building[0]) <= 4:
+                        currentBuildingData.exclude(type=5).exclude(type=6).exclude(type=7).exclude(type=8) \
+                            .filter(realm=building[1]).filter(x=building[2]).filter(y=building[3]).delete()
+                        print("deleted")
+                    elif int(building[0]) <= 7:
+                        currentBuildingData.exclude(type=0).exclude(type=1).exclude(type=2).exclude(type=3) \
+                            .exclude(type=4).exclude(type=8).filter(realm=building[1]).filter(x=building[2]) \
+                            .filter(y=building[3]).filter(direction=building[4]).delete()
+                        print("deleted")
+                    elif int(building[0]) == 8:
+                        currentBuildingData.filter(type=8).filter(realm=building[1]).filter(firstX=building[2]) \
+                            .filter(firstY=building[3]).filter(secondX=building[4]).filter(secondY=building[5]).delete()
+                        print("deleted")
         update_timestamp()
         return HttpResponse(status=200)  # Success.
 
@@ -186,29 +215,35 @@ def saveArmyData(request):
     elif not user.is_staff:
         return HttpResponse(status=403)  # Access denied. You have to be SL to do this.
     else:
-        reich = RealmMembership.objects.get(user=user).reich
+        #realm = RealmMembership.objects.get(user=user).realm
         currentArmyData = Troop.objects.all()
         armydata = request.POST.get("armies")
         listOfData = armydata.split(";")
+        armiesToSave = []
         for listItem in listOfData:
-            axyo = listItem.split(",")  # Army axyo[0-5], X = axyo[6], Y = axyo[7], Owner = axyo[8]
-            if reich == Realm.objects.get(pk=axyo[8]):
-                print(listItem)
-                currentArmyData.filter(armyId=axyo[0]).filter(reich=Realm.objects.get(pk=axyo[8])).delete()
-                print("deleted")
-                # Don't re-insert empty armies
-                if axyo[1] == 0 & axyo[2] == 0 & axyo[3] == 0 & axyo[4] == 0 & axyo[5] == 0:
-                    army = Troop()
-                    army.armyId = axyo[0]
-                    army.count = axyo[1]
-                    army.leaders = axyo[2]
-                    army.lkp = axyo[3]
-                    army.skp = axyo[4]
-                    army.mounts = axyo[5]
-                    army.x = axyo[6]
-                    army.y = axyo[7]
-                    army.reich = Realm.objects.get(pk=axyo[8])
-                    army.save()
+            axyol = listItem.split(",")  # Army axyo[0-5], X = axyo[6], Y = axyo[7], Owner = axyo[8]
+            #if realm == Realm.objects.get(pk=axyo[8]):
+            print(listItem)
+            currentArmyData.filter(armyId=axyol[0]).filter(realm=Realm.objects.get(pk=axyol[8])).delete()
+            print("deleted")
+            army = Troop()
+            army.armyId = axyol[0]
+            army.count = axyol[1]
+            army.leaders = axyol[2]
+            army.lkp = axyol[3]
+            army.skp = axyol[4]
+            army.mounts = axyol[5]
+            army.x = axyol[6]
+            army.y = axyol[7]
+            army.realm = Realm.objects.get(pk=axyol[8])
+            if axyol[9] == "null":
+                army.isLoadedIn = None
+            else:
+                army.isLoadedIn = axyol[9]
+            army.save()
+            armiesToSave.append(army.pk)
+        currentArmyData = Troop.objects.all()
+        currentArmyData.exclude(pk__in=armiesToSave).delete()
         update_timestamp()
         return HttpResponse(status=200)  # Success.
 

@@ -118,6 +118,7 @@ class Troop(models.Model):
     x = models.IntegerField()
     y = models.IntegerField()
     isGuard = models.BooleanField(default=False)
+    isLoadedIn = models.IntegerField(default=None, null=True)
 
     def __str__(self):
         return str(self.realm) + ', ' + str(self.armyId) + ', ' + str(self.x) + ', ' + str(self.y)
