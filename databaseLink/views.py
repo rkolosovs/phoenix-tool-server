@@ -412,12 +412,18 @@ def getPendingEvents(request):
     # TODO: Do this for all other types of events (when you come around to using them).
     json_events = []
     for e in pending_move_events:
-        army = serializers.serialize('python', Troop.objects.filter(id=(e['fields']['troop'])))[0]['fields']
+        troops = serializers.serialize('python', Troop.objects.filter(id=(e['fields']['troop'])))
+        if len(troops) > 0:
+            id = troops[0]['fields']['armyId']
+            realm = getRealmForId(troops[0]['fields'])
+        else:
+            id = '*none*'
+            realm = '*none*'
         json_events.append({
             'type': 'move',
             'content': {
-                'armyId': army['armyId'],
-                'realm': getRealmForId(army),
+                'armyId': id,
+                'realm': realm,
                 'fromX': e['fields']['from_x'],
                 'fromY': e['fields']['from_y'],
                 'toX': e['fields']['to_x'],
