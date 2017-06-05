@@ -143,7 +143,11 @@ class Troop(models.Model):
     isGuard = models.BooleanField(default=False)
 
     def __str__(self):
-        return Realm.short(self.realm) + ', ' + str(self.armyId) + ', (' + str(self.x) + ', ' + str(self.y) + ')'
+        is_guard = ''
+        if self.isGuard:
+            is_guard = ', Guard'
+        return Realm.short(self.realm) + ', ' + str(self.armyId) + ', (' + str(self.x) + ', ' + str(self.y) + ')' \
+            + ', Count: ' + str(self.count) + ', Leaders: ' + str(self.leaders) + is_guard
 
 
 class TurnOrder(models.Model):
