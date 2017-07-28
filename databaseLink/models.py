@@ -18,8 +18,11 @@ class Realm(models.Model):
     name = models.CharField(max_length=250)
     active = models.BooleanField(default=True)
 
+    def short(self):
+        return str(self.tag)
+
     def __str__(self):
-        if (self.active):
+        if self.active:
             return self.name + ' (' + str(self.tag) + ')'
         else:  # mark realms lost to history with X Realm (rlm) X
             return 'X ' + self.name + ' (' + str(self.tag) + ') X'
@@ -67,7 +70,7 @@ class Building(models.Model):
     secondY = models.IntegerField(null=True, blank=True)
 
     def __str__(self):
-        result = str(self.realm) + ' ' + str(self.name) + ' ' + str(self.type_names[self.type])
+        result = Realm.short(self.realm) + ' ' + str(self.name) + ' ' + str(self.type_names[self.type])
         if 0 <= self.type <= 7:
             result += ' (' + str(self.x) + ', ' + str(self.y) + ')'
         if 5 <= self.type <= 7:
@@ -84,7 +87,27 @@ class Field(models.Model):
     y = models.IntegerField()
 
     def __str__(self):
-        return str(self.x) + ', ' + str(self.y)
+        if self.type == 0:
+            type_str = 'shallows'
+        elif self.type == 1:
+            type_str = 'deepsea'
+        elif self.type == 2:
+            type_str = 'lowlands'
+        elif self.type == 3:
+            type_str = 'woods'
+        elif self.type == 4:
+            type_str = 'hills'
+        elif self.type == 5:
+            type_str = 'highlands'
+        elif self.type == 6:
+            type_str = 'mountains'
+        elif self.type == 7:
+            type_str = 'desert'
+        elif self.type == 8:
+            type_str = 'swamp'
+        else:
+            type_str = 'undefined'
+        return '(' + str(self.x) + ', ' + str(self.y) + ') ' + type_str
 
 
 class RealmTerritory(models.Model):
@@ -93,7 +116,7 @@ class RealmTerritory(models.Model):
     y = models.IntegerField()
 
     def __str__(self):
-        return str(self.realm) + ', ' + str(self.x) + ', ' + str(self.y)
+        return Realm.short(self.realm) + ', (' + str(self.x) + ', ' + str(self.y) + ')'
 
 
 class River(models.Model):
@@ -121,7 +144,11 @@ class Troop(models.Model):
     isLoadedIn = models.IntegerField(default=None, null=True)
 
     def __str__(self):
-        return str(self.realm) + ', ' + str(self.armyId) + ', ' + str(self.x) + ', ' + str(self.y)
+        is_guard = ''
+        if self.isGuard:
+            is_guard = ', Guard'
+        return Realm.short(self.realm) + ', ' + str(self.armyId) + ', (' + str(self.x) + ', ' + str(self.y) + ')' \
+            + ', Count: ' + str(self.count) + ', Leaders: ' + str(self.leaders) + is_guard
 
 
 class TurnOrder(models.Model):
@@ -131,10 +158,10 @@ class TurnOrder(models.Model):
     realm = models.ForeignKey(Realm, on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
-        if (self.realm is None):
+        if self.realm is None:
             return str(self.turnNumber) + ', ' + str(self.turnOrder) + ', None'
         else:
-            return str(self.turnNumber) + ', ' + str(self.turnOrder) + ', ' + str(self.realm)
+            return str(self.turnNumber) + ', ' + str(self.turnOrder) + ', ' + Realm.short(self.realm)
 
 
 class MoveEvent(models.Model):
@@ -148,8 +175,16 @@ class MoveEvent(models.Model):
     date = models.DateTimeField(auto_now_add=True, null=True)
 
     def __str__(self):
-        return str(self.troop.realm) + ', ' + str(self.troop.armyId) + ' from (' + str(self.from_x) + ', ' + str(self.from_y) + '), ' + \
-               'to (' + str(self.to_x) + ', ' + str(self.to_y) + '), ' + str(self.processed) + ', ' + str(self.date)
+        if self.processed is True:
+            processed_str = 'processed'
+        else:
+            processed_str = 'not processed'
+        if self.troop is None:
+            troop_str = '*no army*'
+        else:
+            troop_str = Realm.short(self.troop.realm) + ', ' + str(self.troop.armyId)
+        return troop_str + ' from (' + str(self.from_x) + ', ' + str(self.from_y) + '), ' + \
+            'to (' + str(self.to_x) + ', ' + str(self.to_y) + '), ' + processed_str + ', ' + str(self.date)
 
 
 class BattleEvent(models.Model):
@@ -161,7 +196,16 @@ class BattleEvent(models.Model):
     date = models.DateTimeField(auto_now_add=True, null=True)
 
     def __str__(self):
-        return str(self.x) + ', ' + str(self.y) + ', ' + str(self.processed) + ', ' + str(self.date)
+        if self.processed is True:
+            processed_str = 'processed'
+        else:
+            processed_str = 'not processed'
+        participants_str = '['
+        for p in self.participants.all():
+            participants_str += '('+Realm.short(p.realm)+','+str(p.armyId)+')'
+        participants_str += ']'
+        return participants_str + ', (' + str(self.x) + ', ' + str(self.y) + '), ' + processed_str + ', ' + \
+            str(self.date)
 
 
 class BuildEvent(models.Model):
@@ -173,7 +217,11 @@ class BuildEvent(models.Model):
     date = models.DateTimeField(auto_now_add=True, null=True)
 
     def __str__(self):
-        return str(self.x) + ', ' + str(self.y) + ', ' + str(self.type) + ', ' + str(self.processed) + \
+        if self.processed is True:
+            processed_str = 'processed'
+        else:
+            processed_str = 'not processed'
+        return '(' + str(self.x) + ', ' + str(self.y) + '), ' + str(self.type) + ', ' + processed_str + \
                ', ' + str(self.date)
 
 
@@ -195,6 +243,10 @@ class RecruitmentEvent(models.Model):
     date = models.DateTimeField(auto_now_add=True, null=True)
 
     def __str__(self):
+        if self.processed is True:
+            processed_str = 'processed'
+        else:
+            processed_str = 'not processed'
         output = str(self.building) + ' recruits '
         if not self.footmen.null:
             output += str(self.footmen) + ' footmen, '
@@ -212,7 +264,7 @@ class RecruitmentEvent(models.Model):
             output += str(self.lks) + ' light warships, '
         if not self.sks.null:
             output += str(self.sks) + ' heavy warships, '
-        output += str(self.processed) + ', ' + str(self.date)
+        output += processed_str + ', ' + str(self.date)
         return output
 
 
@@ -224,12 +276,16 @@ class TreasuryEvent(models.Model):
     date = models.DateTimeField(auto_now_add=True, null=True)
 
     def __str__(self):
+        if self.processed is True:
+            processed_str = 'processed'
+        else:
+            processed_str = 'not processed'
         if self.change.to_python() >= 0:
             direction = ' gains '
         else:
             direction = ' loses '
-        return str(self.realm) + direction + str(abs(self.change.to_python())) + ', ' + str(self.processed) + ', ' + \
-               str(self.date)
+        return Realm.short(self.realm) + direction + str(abs(self.change.to_python())) + ', ' + processed_str + \
+            ', ' + str(self.date)
 
 
 class TurnEvent(models.Model):
