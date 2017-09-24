@@ -1,6 +1,7 @@
 from django.http import HttpResponse
 from django.core import serializers
 import json
+import time
 from .models import Field, River, Building, Troop, Realm, RealmTerritory, RealmMembership, MoveEvent, BattleEvent, \
     BuildEvent, RecruitmentEvent, TurnEvent, CommentEvent, TurnOrder, LastSavedTimeStamp, SplitEvent, MergeEvent, \
     TransferEvent
@@ -263,22 +264,23 @@ def saveBorderData(request):
     elif not user.is_staff:
         return HttpResponse(status=403)  # Access denied. You have to be SL to do this.
     else:
-        currentBorderData = RealmTerritory.objects.all()
-        borderdata = request.POST.get("borders")
-        listOfData = borderdata.split(";")
-        for listItem in listOfData:
-            reichfieldlist = listItem.split(":")
-            owner = Realm.objects.get(name=reichfieldlist[0])
-            fields = reichfieldlist[1].split(",")
-            for field in fields:
-                xy = field.split("/")
-                currentBorderData.filter(x=xy[0]).filter(y=xy[1]).delete()
-                print("deleted")
-                reichsgebiet = RealmTerritory()
-                reichsgebiet.reich = owner
-                reichsgebiet.x = xy[0]
-                reichsgebiet.y = xy[1]
-                reichsgebiet.save()
+        new_border_data = json.loads(request.POST['borders'])
+        realms = Realm.objects.all()
+        for realm in realms:
+            new_realm_borders = filter(lambda x: x['tag'] == realm.tag, new_border_data)[0]['land']
+            old_realm_borders = RealmTerritory.objects.filter(realm=realm)
+            for field in old_realm_borders:
+                if not ([field.x, field.y] in new_realm_borders):
+                    field.delete()
+            for field in new_realm_borders:
+                realm_field = RealmTerritory()
+                realm_field.realm = realm
+                realm_field.x = field[0]
+                realm_field.y = field[1]
+                if not (realm_field in old_realm_borders):
+                    realm_field.save()
+                else:
+                    realm_field.delete()
         update_timestamp()
         return HttpResponse(status=200)  # Success.
 
