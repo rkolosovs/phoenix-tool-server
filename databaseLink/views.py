@@ -273,14 +273,12 @@ def saveBorderData(request):
                 if not ([field.x, field.y] in new_realm_borders):
                     field.delete()
             for field in new_realm_borders:
-                realm_field = RealmTerritory()
-                realm_field.realm = realm
-                realm_field.x = field[0]
-                realm_field.y = field[1]
-                if not (realm_field in old_realm_borders):
+                if not filter(lambda old_field: old_field.x == field[0] and old_field.y == field[1], old_realm_borders):
+                    realm_field = RealmTerritory()
+                    realm_field.realm = realm
+                    realm_field.x = field[0]
+                    realm_field.y = field[1]
                     realm_field.save()
-                else:
-                    realm_field.delete()
         update_timestamp()
         return HttpResponse(status=200)  # Success.
 
