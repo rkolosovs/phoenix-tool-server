@@ -6,6 +6,7 @@ from .models import Field, River, Building, Troop, Realm, RealmTerritory, RealmM
     BuildEvent, RecruitmentEvent, TurnEvent, CommentEvent, TurnOrder, LastSavedTimeStamp, SplitEvent, MergeEvent, \
     TransferEvent
 import django.middleware.csrf
+import math
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
 from django.views.generic import View
@@ -641,12 +642,15 @@ def postMergeEvent(request):
         return HttpResponse(status=401)  # Authorisation failure. Please log in.
     elif user.is_staff:
         # enter into db
+        print("user is staff:")
         return enterMergeEvent(event)
     else:
         # check if user is of correct realm, then enter into db
         if getRealmForId(realmMembership[0]['fields']) == event['realm']:
+            print("user is fitting realm:")
             return enterMergeEvent(event)
         else:
+            print("user is wrong realm:")
             return HttpResponse(status=403)  # Access denied. You can only move your own army.
 
 
@@ -659,12 +663,15 @@ def postTransferEvent(request):
         return HttpResponse(status=401)  # Authorisation failure. Please log in.
     elif user.is_staff:
         # enter into db
+        print("user is staff:")
         return enterTransferEvent(event)
     else:
         # check if user is of correct realm, then enter into db
         if getRealmForId(realmMembership[0]['fields']) == event['realm']:
+            print("user is fitting realm:")
             return enterTransferEvent(event)
         else:
+            print("user is wrong realm:")
             return HttpResponse(status=403)  # Access denied. You can only move your own army.
 
 def postSplitEvent(request):
@@ -676,12 +683,15 @@ def postSplitEvent(request):
         return HttpResponse(status=401)  # Authorisation failure. Please log in.
     elif user.is_staff:
         # enter into db
+        print("user is staff:")
         return enterSplitEvent(event)
     else:
         # check if user is of correct realm, then enter into db
         if getRealmForId(realmMembership[0]['fields']) == event['realm']:
+            print("user is fitting realm:")
             return enterSplitEvent(event)
         else:
+            print("user is wrong realm:")
             return HttpResponse(status=403)  # Access denied. You can only move your own army.
 
 def enterMergeEvent(event):
@@ -694,7 +704,7 @@ def enterMergeEvent(event):
     toArmyId = Troop.objects.filter(armyId=event['toArmyId']).filter(realm=realm[0]['pk'])
     if len(toArmyId) == 0:
         return HttpResponse(status=400)  # Invalid input. Troop does not exist.
-    me = MergeEvent(realm=event['realm'], fromArmy=event['fromArmyId'], toArmy=event['toArmyId'])
+    me = MergeEvent(realm=Realm.objects.get(tag=event['realm']), fromArmy=fromArmyId[0], toArmy=toArmyId[0])
     me.save()
     update_timestamp()
     return HttpResponse(status=200)
@@ -709,9 +719,10 @@ def enterTransferEvent(event):
     toArmyId = Troop.objects.filter(armyId=event['toArmyId']).filter(realm=realm[0]['pk'])
     if len(toArmyId) == 0:
         return HttpResponse(status=400)  # Invalid input. Troop does not exist.
-    te = TransferEvent(realm=event['realm'], fromArmy=event['fromArmyId'], toArmy=event['toArmyId'],
+    te = TransferEvent(realm=Realm.objects.get(tag=event['realm']), fromArmy=fromArmyId[0], toArmy=toArmyId[0],
                        troops=event['troops'], leaders=event['leaders'], mounts=event['mounts'],
-                       skp=event['skp'], lkp=event['lkp'])
+                       skp=event['skp'], lkp=event['lkp'], armyFromType=math.floor(event['fromArmyId']/100),
+                       armyToType=math.floor(event['toArmyId'] / 100))
     te.save()
     update_timestamp()
     return HttpResponse(status=200)
@@ -723,7 +734,7 @@ def enterSplitEvent(event):
     fromArmyId = Troop.objects.filter(armyId=event['fromArmyId']).filter(realm=realm[0]['pk'])
     if len(fromArmyId) == 0:
         return HttpResponse(status=400)  # Invalid input. Troop does not exist.
-    se = SplitEvent(realm=event['realm'], fromArmy=event['fromArmyId'], newArmy=event['newArmysId'],
+    se = SplitEvent(realm=Realm.objects.get(tag=event['realm']), fromArmy=fromArmyId[0], newArmy=event['newArmysId'],
                     troops=event['troops'], leaders=event['leaders'], mounts=event['mounts'],
                     skp=event['skp'], lkp=event['lkp'])
     se.save()
