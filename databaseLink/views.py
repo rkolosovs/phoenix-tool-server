@@ -17,7 +17,7 @@ from rest_framework.authtoken.models import Token
 def armyData(request):
     sessionKey = request.POST.get('authorization')
     if (sessionKey == '0') | (sessionKey is None):
-        all_troops_data = serializers.serialize('python', Troop.objects.filter(status = "active"))
+        all_troops_data = serializers.serialize('python', Troop.objects.filter(status="active"))
         data = [d['fields'] for d in all_troops_data]
         for d in data:
             d['count'] = -1
@@ -31,7 +31,7 @@ def armyData(request):
     else:
         user = Token.objects.get(key=sessionKey).user
         realmMembership = serializers.serialize('python', RealmMembership.objects.filter(user=user))
-        all_troops_data = serializers.serialize('python', Troop.objects.filter(status = "active"))
+        all_troops_data = serializers.serialize('python', Troop.objects.filter(status="active"))
         data = [d['fields'] for d in all_troops_data]
         if user.is_staff:  # user is SL
             pass

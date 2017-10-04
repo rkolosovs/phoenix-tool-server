@@ -160,8 +160,9 @@ class Troop(models.Model):
             status = '(inactive) '
         if self.isGuard:
             is_guard = ', Guard'
-        return status + Realm.short(self.realm) + ', ' + str(self.armyId) + ', (' + str(self.x) + ', ' + str(self.y) + ')' \
-            + ', Count: ' + str(self.count) + ', Leaders: ' + str(self.leaders) + is_guard
+        return status + Realm.short(self.realm) + ', ' + str(self.armyId) + ', (' + str(self.x) + ', ' + str(self.y) \
+            + ')' + ', Count: ' + str(self.count) + ', Leaders: ' + str(self.leaders) + is_guard + ', MP: ' \
+            + str(self.movementPoints) + ', HP: ' + str(self.heightPoints)
 
 
 class TurnOrder(models.Model):
