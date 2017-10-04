@@ -151,9 +151,14 @@ class Troop(models.Model):
 
     def __str__(self):
         is_guard = ''
+        status = ''
+        if str(self.status) == "tobe":
+            status = '(to be) '
+        elif str(self.status) == "inactive":
+            status = '(inactive) '
         if self.isGuard:
             is_guard = ', Guard'
-        return Realm.short(self.realm) + ', ' + str(self.armyId) + ', (' + str(self.x) + ', ' + str(self.y) + ')' \
+        return status + Realm.short(self.realm) + ', ' + str(self.armyId) + ', (' + str(self.x) + ', ' + str(self.y) + ')' \
             + ', Count: ' + str(self.count) + ', Leaders: ' + str(self.leaders) + is_guard
 
 
