@@ -140,6 +140,8 @@ class Troop(models.Model):
     skp = models.IntegerField()
     x = models.IntegerField()
     y = models.IntegerField()
+    movementPoints = models.IntegerField()
+    heightPoints = models.IntegerField()
     isGuard = models.BooleanField(default=False)
     isLoadedIn = models.IntegerField(default=None, blank=True , null=True)
     STATUS_CHOICES = (("tobe", "tobe"), ("active", "active"), ("inactive", "inactive"))

@@ -219,31 +219,33 @@ def saveArmyData(request):
         return HttpResponse(status=403)  # Access denied. You have to be SL to do this.
     else:
         currentArmyData = Troop.objects.all()
-        armydata = request.POST.get("armies")
-        listOfData = armydata.split(";")
+        # armydata = request.POST.get("armies")
+        listOfData = json.loads(request.POST['armies'])
         armiesToSave = []
         for listItem in listOfData:
-            axyol = listItem.split(",")
+            # axyol = listItem.split(",")
             # Army axyol[0-5], X = axyol[6], Y = axyol[7], Owner = axyol[8], isLoaded in axyol[9]
-            findArmyInDB = currentArmyData.filter(armyId=axyol[0]).filter(status="active")\
-                .filter(realm=Realm.objects.get(pk=axyol[8]))
+            findArmyInDB = currentArmyData.filter(armyId=listItem['armyId']).filter(status="active")\
+                .filter(realm=Realm.objects.get(pk=listItem['ownerPk']))
             if len(findArmyInDB) > 0:
                 army = findArmyInDB[0]
             else:
                 army = Troop()
-            army.armyId = axyol[0]
-            army.count = axyol[1]
-            army.leaders = axyol[2]
-            army.lkp = axyol[3]
-            army.skp = axyol[4]
-            army.mounts = axyol[5]
-            army.x = axyol[6]
-            army.y = axyol[7]
-            army.realm = Realm.objects.get(pk=axyol[8])
-            if axyol[9] == "null":
+            army.armyId = listItem['armyId']
+            army.count = listItem['count']
+            army.leaders = listItem['leaders']
+            army.lkp = listItem['lkp']
+            army.skp = listItem['skp']
+            army.mounts = listItem['mounts']
+            army.x = listItem['x']
+            army.y = listItem['y']
+            army.realm = Realm.objects.get(pk=listItem['ownerPk'])
+            army.movementPoints = listItem['movementPoints']
+            army.heightPoints = listItem['heightPoints']
+            if listItem['isLoadedIn'] == "null":
                 army.isLoadedIn = None
             else:
-                army.isLoadedIn = axyol[9]
+                army.isLoadedIn = listItem['isLoadedIn']
             army.save()
             armiesToSave.append(army.pk)
         currentArmyData = Troop.objects.all()
