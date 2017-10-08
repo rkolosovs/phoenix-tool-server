@@ -452,6 +452,9 @@ def checkEvent(request):
             be.save()
         elif event_type == 'split':
             be = SplitEvent.objects.filter(id=event_id)[0]
+            toArmy = Troop.objects.filter(armyId=be.newArmy).get(realm=be.realm)
+            toArmy.status = 'active'
+            toArmy.save()
             be.processed = True
             be.save()
         elif event_type == 'merge':
@@ -737,7 +740,11 @@ def enterSplitEvent(event):
     se = SplitEvent(realm=Realm.objects.get(tag=event['realm']), fromArmy=fromArmyId[0], newArmy=event['newArmysId'],
                     troops=event['troops'], leaders=event['leaders'], mounts=event['mounts'],
                     skp=event['skp'], lkp=event['lkp'])
+    newArmy = Troop(realm=Realm.objects.get(tag=event['realm']), armyId=event['newArmysId'], count=event['troops'],
+                  leaders=event['leaders'], mounts=event['mounts'], skp=event['skp'], lkp=event['lkp'],
+                  x=fromArmyId[0].x, y=fromArmyId[0].y, status='tobe')
     se.save()
+    newArmy.save()
     update_timestamp()
     return HttpResponse(status=200)
 
