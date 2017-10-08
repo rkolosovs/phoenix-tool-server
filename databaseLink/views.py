@@ -752,7 +752,7 @@ def enterMoveEvent(event):
         return HttpResponse(status=400)  # Invalid input. Troop does not exist.
     me = MoveEvent(troop=army[0], from_x=event['fromX'], from_y=event['fromY'], to_x=event['toX'], to_y=event['toY'])
     me.save()
-    update_timestamp()
+    # update_timestamp()
     return HttpResponse(status=200)
 
 
@@ -763,7 +763,7 @@ def enterBattleEvent(event, armies):
     be = BattleEvent(x=event['x'], y=event['y'])
     be.save()
     be.participants = partips
-    update_timestamp()
+    # update_timestamp()
     return HttpResponse(status=200)
 
 
