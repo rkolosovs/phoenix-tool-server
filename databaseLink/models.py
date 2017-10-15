@@ -149,6 +149,9 @@ class Troop(models.Model):
         default="active",
     )
 
+    def short(self):
+        return str(self.armyId)
+
     def __str__(self):
         is_guard = ''
         if self.isGuard:
@@ -303,7 +306,7 @@ class MergeEvent(models.Model):
     date = models.DateTimeField(auto_now_add=True, null=True)
 
     def __str__(self):
-        return str(self.realm) + ', army ' + str(self.fromArmy) + ', merges into ' + str(self.toArmy)
+        return Realm.short(self.realm) + ', army ' + Troop.short(self.fromArmy) + ', merges into ' + Troop.short(self.toArmy)
 
 class TransferEvent(models.Model):
     # Used to record the transfer of troops from one army to another
@@ -321,7 +324,8 @@ class TransferEvent(models.Model):
     date = models.DateTimeField(auto_now_add=True, null=True)
 
     def __str__(self):
-        return str(self.realm) + ', army ' + str(self.fromArmy) + ', transfers troops to ' + str(self.toArmy)
+        return Realm.short(self.realm) + ', army ' + Troop.short(self.fromArmy) + ', transfers troops to ' + \
+               Troop.short(self.toArmy)
 
 class SplitEvent(models.Model):
     # Used to record the splitting of an army
@@ -335,6 +339,10 @@ class SplitEvent(models.Model):
     skp = models.IntegerField()
     processed = models.BooleanField(default=False)
     date = models.DateTimeField(auto_now_add=True, null=True)
+
+    def __str__(self):
+        return Realm.short(self.realm) + ', army ' + Troop.short(self.fromArmy) + ', splits of army  ' + str(self.newArmy) + ' with ' +\
+               str(self.troops) + " troops, and " + str(self.leaders) + " leaders."
 
 class TurnEvent(models.Model):
     # Used to record turn change
