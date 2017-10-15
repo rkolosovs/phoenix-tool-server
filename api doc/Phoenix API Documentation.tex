@@ -46,7 +46,7 @@ Die Heere (Armeen) und Flotten erhält man mit einer Anfrage an "/databaseLink/a
 Das Authentifizierungs-Token identifiziert einen eingeloggten Nutzer und ist in \ref{s:security} beschrieben. Die Antwort hat das folgende Format:
 \begin{lstlisting}
 {
-  'realm': Kontrolierendes Reich (Kürzel),
+  'realm': Kontrolierendes Reich (DB-Key),
   'armyId': Armeenummer (Phoenix),
   'count': Truppen-/Schiffsanzahl,
   'leaders': Heerführeranzahl,
@@ -55,7 +55,10 @@ Das Authentifizierungs-Token identifiziert einen eingeloggten Nutzer und ist in 
   'skp': schwere Katapulte/Kriegsschiffe,
   'x': x-Koordinate der Position,
   'y': y-Koordinate der Position,
-  'isGuard': True für Gardeheere/ -flotten
+  'isGuard': True für Gardeheere/ -flotten,
+  'isLoadedIn': True für Landheere auf Schiffen,
+  'movementPoints': Bewegungspunkte der Armee,
+  'heightPoints': Höhenpunkte der Armee
 }
 \end{lstlisting}
 Fußheere, Reiterheere und Flotten werden Serverseitig gleich gespeichert. Welches gemeint ist und somit, welche Bedeutung die einzelnen Felder haben, lässt sich aus dem 'armyId'-Feld ablesen. Die Fußheere haben Nummern 101-199, Reiterheere 201-299 und Flotten 301-399.\\
@@ -155,11 +158,26 @@ Dieser Abschnitt beschreibt, mit welchen Anfragen und in welchem Format die Änd
 Man speichert die Armeen in dem man eine Anfrage an "/databaseLink/savearmydata/" schickt. Die Anfrage muss wie folgt aussehen:
 \begin{lstlisting}
 {
-  'armies': Armeen als String,
+  'armies': [
+    'armyId': Armeenummer (Phoenix),
+	'count': Truppen-/Schiffsanzahl,
+    'leaders': Heerführerzahl,
+    'lkp': leichte Katapulte/Kriegsschiffe,
+    'skp': schwere Katapulte/Kriegsschiffe,
+    'mounts': mitgeführte Reittiere,
+    'ownerPk': Kontrolierendes Reich 
+               (DB-Key),
+    'movementPoints': Bewegungspunkte 
+                      der Armee,
+    'heightPoints': Höhenpunkte 
+                    der Armee,
+    'isLoadedIn': True für Landheere 
+                  auf Schiffen
+  ],
   'authorization': Auth-Token
 }
 \end{lstlisting}
-Das Feld 'armies' enthält die zu schreibenden Armeen als ein String. \textbf{ Nicht maintainable! Dies sollte schnellstmöglich zu einem vernünftigen JSON-Format geändert werden!} Das 'authorization'-Feld enthält den Authentifizierungs-Token. Nur wenn dieser den User als einen Spielleiter identifiziert, wird diese Anfrage akzeptiert.\\
+Das Feld 'armies' enthält die zu schreibenden Armeen als ein Array, das mit dem Stringify-Verfahren zu einem String verpackt wurde. Soll eine Armee gelöscht werden, lässt man sie einfach aus der Liste raus. In diesem Fall wird die Armee serverseitig nicht aus der DB entfernt, aber als 'inactive' markiert. So markierte Armeen sind effektiv gelöscht: Sie werden nicht mit den restlichen Armeen an den Client geschickt und werden nur zur Spielhistorie in der DB behalten. Das 'authorization'-Feld enthält den Authentifizierungs-Token. Nur wenn dieser den User als einen Spielleiter identifiziert, wird diese Anfrage akzeptiert.\\
 Die Anfrage liefert Statuscodes mit folgender Bedeutung zurück:
 \begin{itemize}
 \item 200: Erfolg
@@ -215,11 +233,16 @@ Die Anfrage liefert Statuscodes mit folgender Bedeutung zurück:
 Die Gebäude werden mit der Anfrage an "/databaseLink/saveborderdata/" gespeichert. Der Inhalt der Anfrage muss wie folgt aussehen:
 \begin{lstlisting}
 {
-  'borders': Flüsse als String,
+  'borders': [{
+    'tag': Kontrolierendes Reich (Kürzel),
+    'land': [
+      [x-Koordinate, y-Koordinate], ...
+    ]   
+  }, ... ],
   'authorization': Auth-Token
 }
 \end{lstlisting}
-Das Feld 'borders' enthält die zu schreibenden Grenzen als ein String. \textbf{ Nicht maintainable! Dies sollte schnellstmöglich zu einem vernünftigen JSON-Format geändert werden!} Das 'authorization'-Feld enthält den Authentifizierungs-Token. Nur wenn dieser den User als einen Spielleiter identifiziert, wird diese Anfrage akzeptiert.\\
+Das Feld 'borders' enthält die zu schreibenden Grenzen im selben Format wie es vom Server empfangen wurde. Sie müssen mit der Stringify-Methode zu einem String verpackt werden. Das 'authorization'-Feld enthält den Authentifizierungs-Token. Nur wenn dieser den User als einen Spielleiter identifiziert, wird diese Anfrage akzeptiert.\\
 Die Anfrage liefert Statuscodes mit folgender Bedeutung zurück:
 \begin{itemize}
 \item 200: Erfolg

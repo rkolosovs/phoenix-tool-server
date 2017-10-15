@@ -140,6 +140,8 @@ class Troop(models.Model):
     skp = models.IntegerField()
     x = models.IntegerField()
     y = models.IntegerField()
+    movementPoints = models.IntegerField()
+    heightPoints = models.IntegerField()
     isGuard = models.BooleanField(default=False)
     isLoadedIn = models.IntegerField(default=None, blank=True , null=True)
     STATUS_CHOICES = (("tobe", "tobe"), ("active", "active"), ("inactive", "inactive"))
@@ -151,10 +153,16 @@ class Troop(models.Model):
 
     def __str__(self):
         is_guard = ''
+        status = ''
+        if str(self.status) == "tobe":
+            status = '(to be) '
+        elif str(self.status) == "inactive":
+            status = '(inactive) '
         if self.isGuard:
             is_guard = ', Guard'
-        return Realm.short(self.realm) + ', ' + str(self.armyId) + ', (' + str(self.x) + ', ' + str(self.y) + ')' \
-            + ', Count: ' + str(self.count) + ', Leaders: ' + str(self.leaders) + is_guard
+        return status + Realm.short(self.realm) + ', ' + str(self.armyId) + ', (' + str(self.x) + ', ' + str(self.y) \
+            + ')' + ', Count: ' + str(self.count) + ', Leaders: ' + str(self.leaders) + is_guard + ', MP: ' \
+            + str(self.movementPoints) + ', HP: ' + str(self.heightPoints)
 
 
 class TurnOrder(models.Model):

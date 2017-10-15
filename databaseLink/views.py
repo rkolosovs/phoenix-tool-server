@@ -1,6 +1,7 @@
 from django.http import HttpResponse
 from django.core import serializers
 import json
+import time
 from .models import Field, River, Building, Troop, Realm, RealmTerritory, RealmMembership, MoveEvent, BattleEvent, \
     BuildEvent, RecruitmentEvent, TurnEvent, CommentEvent, TurnOrder, LastSavedTimeStamp, SplitEvent, MergeEvent, \
     TransferEvent
@@ -16,7 +17,7 @@ from rest_framework.authtoken.models import Token
 def armyData(request):
     sessionKey = request.POST.get('authorization')
     if (sessionKey == '0') | (sessionKey is None):
-        all_troops_data = serializers.serialize('python', Troop.objects.filter(status = "active"))
+        all_troops_data = serializers.serialize('python', Troop.objects.filter(status="active"))
         data = [d['fields'] for d in all_troops_data]
         for d in data:
             d['count'] = -1
@@ -30,7 +31,7 @@ def armyData(request):
     else:
         user = Token.objects.get(key=sessionKey).user
         realmMembership = serializers.serialize('python', RealmMembership.objects.filter(user=user))
-        all_troops_data = serializers.serialize('python', Troop.objects.filter(status = "active"))
+        all_troops_data = serializers.serialize('python', Troop.objects.filter(status="active"))
         data = [d['fields'] for d in all_troops_data]
         if user.is_staff:  # user is SL
             pass
@@ -218,31 +219,33 @@ def saveArmyData(request):
         return HttpResponse(status=403)  # Access denied. You have to be SL to do this.
     else:
         currentArmyData = Troop.objects.all()
-        armydata = request.POST.get("armies")
-        listOfData = armydata.split(";")
+        # armydata = request.POST.get("armies")
+        listOfData = json.loads(request.POST['armies'])
         armiesToSave = []
         for listItem in listOfData:
-            axyol = listItem.split(",")
+            # axyol = listItem.split(",")
             # Army axyol[0-5], X = axyol[6], Y = axyol[7], Owner = axyol[8], isLoaded in axyol[9]
-            findArmyInDB = currentArmyData.filter(armyId=axyol[0]).filter(status="active")\
-                .filter(realm=Realm.objects.get(pk=axyol[8]))
+            findArmyInDB = currentArmyData.filter(armyId=listItem['armyId']).filter(status="active")\
+                .filter(realm=Realm.objects.get(pk=listItem['ownerPk']))
             if len(findArmyInDB) > 0:
                 army = findArmyInDB[0]
             else:
                 army = Troop()
-            army.armyId = axyol[0]
-            army.count = axyol[1]
-            army.leaders = axyol[2]
-            army.lkp = axyol[3]
-            army.skp = axyol[4]
-            army.mounts = axyol[5]
-            army.x = axyol[6]
-            army.y = axyol[7]
-            army.realm = Realm.objects.get(pk=axyol[8])
-            if axyol[9] == "null":
+            army.armyId = listItem['armyId']
+            army.count = listItem['count']
+            army.leaders = listItem['leaders']
+            army.lkp = listItem['lkp']
+            army.skp = listItem['skp']
+            army.mounts = listItem['mounts']
+            army.x = listItem['x']
+            army.y = listItem['y']
+            army.realm = Realm.objects.get(pk=listItem['ownerPk'])
+            army.movementPoints = listItem['movementPoints']
+            army.heightPoints = listItem['heightPoints']
+            if listItem['isLoadedIn'] == "null":
                 army.isLoadedIn = None
             else:
-                army.isLoadedIn = axyol[9]
+                army.isLoadedIn = listItem['isLoadedIn']
             army.save()
             armiesToSave.append(army.pk)
         currentArmyData = Troop.objects.all()
@@ -264,22 +267,21 @@ def saveBorderData(request):
     elif not user.is_staff:
         return HttpResponse(status=403)  # Access denied. You have to be SL to do this.
     else:
-        currentBorderData = RealmTerritory.objects.all()
-        borderdata = request.POST.get("borders")
-        listOfData = borderdata.split(";")
-        for listItem in listOfData:
-            reichfieldlist = listItem.split(":")
-            owner = Realm.objects.get(name=reichfieldlist[0])
-            fields = reichfieldlist[1].split(",")
-            for field in fields:
-                xy = field.split("/")
-                currentBorderData.filter(x=xy[0]).filter(y=xy[1]).delete()
-                print("deleted")
-                reichsgebiet = RealmTerritory()
-                reichsgebiet.reich = owner
-                reichsgebiet.x = xy[0]
-                reichsgebiet.y = xy[1]
-                reichsgebiet.save()
+        new_border_data = json.loads(request.POST['borders'])
+        realms = Realm.objects.all()
+        for realm in realms:
+            new_realm_borders = filter(lambda x: x['tag'] == realm.tag, new_border_data)[0]['land']
+            old_realm_borders = RealmTerritory.objects.filter(realm=realm)
+            for field in old_realm_borders:
+                if not ([field.x, field.y] in new_realm_borders):
+                    field.delete()
+            for field in new_realm_borders:
+                if not filter(lambda old_field: old_field.x == field[0] and old_field.y == field[1], old_realm_borders):
+                    realm_field = RealmTerritory()
+                    realm_field.realm = realm
+                    realm_field.x = field[0]
+                    realm_field.y = field[1]
+                    realm_field.save()
         update_timestamp()
         return HttpResponse(status=200)  # Success.
 
@@ -757,7 +759,7 @@ def enterMoveEvent(event):
         return HttpResponse(status=400)  # Invalid input. Troop does not exist.
     me = MoveEvent(troop=army[0], from_x=event['fromX'], from_y=event['fromY'], to_x=event['toX'], to_y=event['toY'])
     me.save()
-    update_timestamp()
+    # update_timestamp()
     return HttpResponse(status=200)
 
 
@@ -768,7 +770,7 @@ def enterBattleEvent(event, armies):
     be = BattleEvent(x=event['x'], y=event['y'])
     be.save()
     be.participants = partips
-    update_timestamp()
+    # update_timestamp()
     return HttpResponse(status=200)
 
 
