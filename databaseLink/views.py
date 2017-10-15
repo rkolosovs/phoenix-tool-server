@@ -744,7 +744,8 @@ def enterSplitEvent(event):
                     skp=event['skp'], lkp=event['lkp'])
     newArmy = Troop(realm=Realm.objects.get(tag=event['realm']), armyId=event['newArmysId'], count=event['troops'],
                   leaders=event['leaders'], mounts=event['mounts'], skp=event['skp'], lkp=event['lkp'],
-                  x=fromArmyId[0].x, y=fromArmyId[0].y, status='tobe')
+                  x=fromArmyId[0].x, y=fromArmyId[0].y, movementPoints=fromArmyId[0].movementPoints,
+                    heightPoints=fromArmyId[0].heightPoints, status='tobe')
     se.save()
     newArmy.save()
     update_timestamp()
