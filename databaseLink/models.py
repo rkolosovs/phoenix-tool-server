@@ -239,6 +239,29 @@ class BuildEvent(models.Model):
         return '(' + str(self.x) + ', ' + str(self.y) + '), ' + str(self.type) + ', ' + processed_str + \
                ', ' + str(self.date)
 
+class ShootEvent(models.Model):
+    # Used to record all the shooting
+    shooter = models.ForeignKey(Troop, on_delete=models.CASCADE, null=True)
+    to_x = models.IntegerField()
+    to_y = models.IntegerField()
+    lkp_count = models.IntegerField()
+    skp_count = models.IntegerField()
+    processed = models.BooleanField(default=False)
+    date = models.DateTimeField(auto_now_add=True, null=True)
+
+    def __str__(self):
+        if self.processed is True:
+            processed_str = 'processed'
+        else:
+            processed_str = 'not processed'
+        if self.shooter is None:
+            shooter_str = '*no army*'
+        else:
+            shooter_str = Realm.short(self.shooter.realm) + ', ' + str(self.shooter.armyId)
+
+        return shooter_str + '(' + str(self.to_x) + ', ' + str(self.to_y) + '), ' + str(self.lkp_count) + ', ' + str(self.skp_count) \
+               + ', ' + processed_str + ', ' + str(self.date)
+
 
 class RecruitmentEvent(models.Model):
     # Used to record recruitment started

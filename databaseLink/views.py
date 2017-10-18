@@ -4,7 +4,7 @@ import json
 import time
 from .models import Field, River, Building, Troop, Realm, RealmTerritory, RealmMembership, MoveEvent, BattleEvent, \
     BuildEvent, RecruitmentEvent, TurnEvent, CommentEvent, TurnOrder, LastSavedTimeStamp, SplitEvent, MergeEvent, \
-    TransferEvent
+    TransferEvent, ShootEvent
 import django.middleware.csrf
 import math
 from django.shortcuts import render, redirect
@@ -607,6 +607,24 @@ def postMoveEvent(request):
             return HttpResponse(status=403)  # Access denied. You can only move your own army.
 
 
+def postShootEvent(request):
+    sessionKey = request.POST.get('authorization')
+    user = Token.objects.get(key=sessionKey).user
+    realmMembership = serializers.serialize('python', RealmMembership.objects.filter(user=user))
+    event = json.loads(request.POST.get('content'))
+    if (sessionKey == '0') | (sessionKey is None):
+        return HttpResponse(status=401)  # Authorisation failure. Please log in.
+    elif user.is_staff:
+        # enter into db
+        return enterShootEvent(event)
+    else:
+        # check if user is of correct realm, then enter into db
+        if getRealmForId(realmMembership[0]['fields']) == event['realm']:
+            return enterShootEvent(event)
+        else:
+            return HttpResponse(status=403)  # Access denied. You can only move your own army.
+
+
 def postBattleEvent(request):
     sessionKey = request.POST.get('authorization')
     user = Token.objects.get(key=sessionKey).user
@@ -755,6 +773,17 @@ def enterMoveEvent(event):
     # update_timestamp()
     return HttpResponse(status=200)
 
+def enterShootEvent(event):
+    realm = serializers.serialize('python', Realm.objects.filter(tag=event['realm']))
+    if len(realm) == 0:
+        return HttpResponse(status=400)  # Invalid input. Realm given does not exist.
+    army = Troop.objects.filter(armyId=event['shooterID']).filter(realm=realm[0]['pk'])
+    if len(army) == 0:
+        return HttpResponse(status=400)  # Invalid input. Troop does not exist.
+    me = ShootEvent(shooter=army[0], lkp_count=event['LKPcount'], skp_count=event['SKPcount'], to_x=event['toX'], to_y=event['toY'])
+    me.save()
+    # update_timestamp()
+    return HttpResponse(status=200)
 
 def enterBattleEvent(event, armies):
     partips = list()
