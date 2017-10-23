@@ -320,8 +320,8 @@ class MergeEvent(models.Model):
             processed_str = 'processed'
         else:
             processed_str = 'not processed'
-        return '(' + processed_str + ') ' + Realm.short(self.realm) + ', army ' + Troop.short(self.fromArmy) + ', merges into '\
-               + Troop.short(self.toArmy) + ' on Field (' + str(self.x) + ',' + str(self.y) + ').'
+        return Troop.short(self.fromArmy) + ', merges into ' + Troop.short(self.toArmy) + ' on Field (' + str(self.x) +\
+               ',' + str(self.y) + ').' + processed_str + ', ' + str(self.date)
 
 class TransferEvent(models.Model):
     # Used to record the transfer of troops from one army to another
@@ -392,7 +392,7 @@ class SplitEvent(models.Model):
             troop_str_from = '*no army*'
         else:
             troop_str_from = Realm.short(self.fromArmy.realm) + ', ' + str(self.fromArmy.armyId)
-        result = '(' + processed_str + ') ' + ', army ' + troop_str_from + ', splits of army  ' + str(self.newArmy) + \
+        result = troop_str_from + ', splits of army  ' + str(self.newArmy) + \
                ' with ' + str(self.troops) + " troops, " + str(self.leaders) + " leaders,"
         if self.mounts > 0:
             result += str(self.mounts) + ' mounts, '
@@ -400,7 +400,7 @@ class SplitEvent(models.Model):
             result += str(self.lkp) + ' lkp, '
         if self.skp > 0:
             result += str(self.skp) + ' skp '
-        result += ' on Field (' + str(self.x) + ',' + str(self.y) + ').'
+        result += ' on Field (' + str(self.x) + ',' + str(self.y) + ').'  + processed_str + ', ' + str(self.date)
         return result
 
 class TurnEvent(models.Model):
