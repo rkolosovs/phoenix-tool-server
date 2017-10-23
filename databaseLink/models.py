@@ -354,10 +354,19 @@ class TransferEvent(models.Model):
             troop_str_to = '*no army*'
         else:
             troop_str_to = Realm.short(self.toArmy.realm) + ', ' + str(self.toArmy.armyId)
-        return '(' + processed_str + ') ' + troop_str_from + ', transfers ' +\
-               str(self.troops) + ' troops, ' + str(self.leaders) + ' leaders, ' + str(self.mounts) + ' mounts, ' +\
-               str(self.lkp) + ' lkp, and ' + str(self.skp) + ' skp to ' + troop_str_to  + ' on Field (' + str(self.x) +\
-               ',' + str(self.y) + ').'
+        result  = '(' + processed_str + ') ' + troop_str_from + ', transfers '
+        if self.troops > 0:
+            result += str(self.troops) + ' troops, '
+        if self.leaders > 0:
+            result += str(self.leaders) + ' leaders, '
+        if self.mounts > 0:
+            result += str(self.mounts) + ' mounts, '
+        if self.lkp > 0:
+            result += str(self.lkp) + ' lkp, '
+        if self.skp > 0:
+            result += str(self.skp) + ' skp '
+        result += 'to ' + troop_str_to  + ' on Field (' + str(self.x) + ',' + str(self.y) + ').'
+        return result
 
 class SplitEvent(models.Model):
     # Used to record the splitting of an army
@@ -383,9 +392,16 @@ class SplitEvent(models.Model):
             troop_str_from = '*no army*'
         else:
             troop_str_from = Realm.short(self.fromArmy.realm) + ', ' + str(self.fromArmy.armyId)
-        return '(' + processed_str + ') ' + Realm.short(self.realm) + ', army ' + troop_str_from + ', splits of army  ' + str(self.newArmy) + \
-               ' with ' + str(self.troops) + " troops, and " + str(self.leaders) + " leaders."  + ' on Field ('\
-               + str(self.x) + ',' + str(self.y) + ').'
+        result = '(' + processed_str + ') ' + ', army ' + troop_str_from + ', splits of army  ' + str(self.newArmy) + \
+               ' with ' + str(self.troops) + " troops, " + str(self.leaders) + " leaders,"
+        if self.mounts > 0:
+            result += str(self.mounts) + ' mounts, '
+        if self.lkp > 0:
+            result += str(self.lkp) + ' lkp, '
+        if self.skp > 0:
+            result += str(self.skp) + ' skp '
+        result += ' on Field (' + str(self.x) + ',' + str(self.y) + ').'
+        return result
 
 class TurnEvent(models.Model):
     # Used to record turn change
