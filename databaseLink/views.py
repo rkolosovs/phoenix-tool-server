@@ -527,7 +527,9 @@ def getPendingEvents(request):
             'content': {
                 'realm': e['fields']['realm'],
                 'fromArmy': id1,
-                'toArmy': id2
+                'toArmy': id2,
+                'x': e['fields']['x'],
+                'y': e['fields']['y']
             },
             'pk': e['pk']
         })
@@ -554,7 +556,9 @@ def getPendingEvents(request):
                 'leaders': e['fields']['leaders'],
                 'mounts': e['fields']['mounts'],
                 'lkp': e['fields']['lkp'],
-                'skp': e['fields']['skp']
+                'skp': e['fields']['skp'],
+                'x': e['fields']['x'],
+                'y': e['fields']['y']
             },
             'pk': e['pk']
         })
@@ -574,7 +578,9 @@ def getPendingEvents(request):
                 'leaders': e['fields']['leaders'],
                 'mounts': e['fields']['mounts'],
                 'lkp': e['fields']['lkp'],
-                'skp': e['fields']['skp']
+                'skp': e['fields']['skp'],
+                'x': e['fields']['x'],
+                'y': e['fields']['y']
             },
             'pk': e['pk']
         })
@@ -709,7 +715,8 @@ def enterMergeEvent(event):
     toArmyId = Troop.objects.filter(armyId=event['toArmyId']).filter(realm=realm[0]['pk'])
     if len(toArmyId) == 0:
         return HttpResponse(status=400)  # Invalid input. Troop does not exist.
-    me = MergeEvent(realm=Realm.objects.get(tag=event['realm']), fromArmy=fromArmyId[0], toArmy=toArmyId[0])
+    me = MergeEvent(realm=Realm.objects.get(tag=event['realm']), fromArmy=fromArmyId[0], toArmy=toArmyId[0],
+                    x = event['x'], y = event['y'])
     me.save()
     update_timestamp()
     return HttpResponse(status=200)
@@ -727,7 +734,8 @@ def enterTransferEvent(event):
     te = TransferEvent(realm=Realm.objects.get(tag=event['realm']), fromArmy=fromArmyId[0], toArmy=toArmyId[0],
                        troops=event['troops'], leaders=event['leaders'], mounts=event['mounts'],
                        skp=event['skp'], lkp=event['lkp'], armyFromType=math.floor(event['fromArmyId']/100),
-                       armyToType=math.floor(event['toArmyId'] / 100))
+                       armyToType=math.floor(event['toArmyId'] / 100),
+                       x = event['x'], y = event['y'])
     te.save()
     update_timestamp()
     return HttpResponse(status=200)
@@ -741,11 +749,11 @@ def enterSplitEvent(event):
         return HttpResponse(status=400)  # Invalid input. Troop does not exist.
     se = SplitEvent(realm=Realm.objects.get(tag=event['realm']), fromArmy=fromArmyId[0], newArmy=event['newArmysId'],
                     troops=event['troops'], leaders=event['leaders'], mounts=event['mounts'],
-                    skp=event['skp'], lkp=event['lkp'])
+                    skp=event['skp'], lkp=event['lkp'], x = event['x'], y = event['y'])
     newArmy = Troop(realm=Realm.objects.get(tag=event['realm']), armyId=event['newArmysId'], count=event['troops'],
                   leaders=event['leaders'], mounts=event['mounts'], skp=event['skp'], lkp=event['lkp'],
                   x=fromArmyId[0].x, y=fromArmyId[0].y, movementPoints=fromArmyId[0].movementPoints,
-                    heightPoints=fromArmyId[0].heightPoints, status='tobe')
+                  heightPoints=fromArmyId[0].heightPoints, status='tobe')
     se.save()
     newArmy.save()
     update_timestamp()
