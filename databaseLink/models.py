@@ -354,7 +354,7 @@ class TransferEvent(models.Model):
             troop_str_to = '*no army*'
         else:
             troop_str_to = Realm.short(self.toArmy.realm) + ', ' + str(self.toArmy.armyId)
-        result  = '(' + processed_str + ') ' + troop_str_from + ', transfers '
+        result  =troop_str_from + ', transfers '
         if self.troops > 0:
             result += str(self.troops) + ' troops, '
         if self.leaders > 0:
@@ -365,7 +365,7 @@ class TransferEvent(models.Model):
             result += str(self.lkp) + ' lkp, '
         if self.skp > 0:
             result += str(self.skp) + ' skp '
-        result += 'to ' + troop_str_to  + ' on Field (' + str(self.x) + ',' + str(self.y) + ').'
+        result += 'to ' + troop_str_to  + ' on Field (' + str(self.x) + ',' + str(self.y) + '). ' + processed_str + ', ' + str(self.date)
         return result
 
 class SplitEvent(models.Model):
@@ -400,7 +400,7 @@ class SplitEvent(models.Model):
             result += str(self.lkp) + ' lkp, '
         if self.skp > 0:
             result += str(self.skp) + ' skp '
-        result += ' on Field (' + str(self.x) + ',' + str(self.y) + ').'  + processed_str + ', ' + str(self.date)
+        result += ' on Field (' + str(self.x) + ',' + str(self.y) + '). ' + processed_str + ', ' + str(self.date)
         return result
 
 class TurnEvent(models.Model):
