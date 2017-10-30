@@ -433,6 +433,36 @@ Die Anfrage liefert Statuscodes mit folgender Bedeutung zurück:
 \item 403: Der eingeloggte Nutzer ist nicht SL oder Besitzer von mindestens einem Heer, welches an der Schlacht teilnimmt
 \end{itemize}
 
+
+
+
+\subsection{Shoot Event}\label{ss:events_shoot}
+Ein Shoot-Event beschreibt einen Fernkampf einer Armee auf ein Zielfeld. Das 'content'-Feld hat den folgenden Inhalt:
+\begin{lstlisting}
+{
+  'armyId': Armeenummer (Phoenix),
+  'realm': Reich der Armee (Kürzel),
+  'LKPcount': Anzahl an leichten Katapulten,
+  'SKPcount': Anzahl an schweren Katapulten,
+  'toX': x-Koordinate Ziel,
+  'toY': y-Koordinate Ziel
+}
+\end{lstlisting}
+Ein neues Event fügt man mit einer Anfrage auf "/databaseLink/shootevent/" hinzu.  Die Anfrage sieht wie folgt aus:
+\begin{lstlisting}
+{
+  'authorization': Auth-Token,
+  'content': {wie oben}
+}
+\end{lstlisting}
+Alle vom eingeloggten SL-User geschickten Shoot-Events werden in die Datenbank aufgenommen. Bei Spielern überprüft der Server zuerst, ob der Spieler zum Reich der schie\ssenden Truppe gehört.\\
+Die Anfrage liefert Statuscodes mit folgender Bedeutung zurück:
+\begin{itemize}
+\item 200: Erfolg
+\item 400: Das schie\ssende Heer existiert nicht
+\item 401: Nutzer ist nicht eingeloggt
+\item 403: Der eingeloggte Nutzer ist nicht SL oder Besitzer des Heeres das shie\ssen m\"ochte. 
+\end{itemize}
 %TODO: Füge weitere Subsections hinzu, wenn neue Eventtypen dazu kommen.
 
 

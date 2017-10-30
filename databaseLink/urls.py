@@ -20,6 +20,7 @@ urlpatterns = [
     url(r'^nextturn/', views.postNextTurn, name='postNextTurn'),
     url(r'^moveevent/', views.postMoveEvent, name='postMoveEvent'),
     url(r'^battleevent/', views.postBattleEvent, name='postBattleEvent'),
+    url(r'^shootevent/', views.postShootEvent, name='postShootEvent'),
     url(r'^mergeevent/', views.postMergeEvent, name='postMergeEvent'),
     url(r'^transferevent/', views.postTransferEvent, name='postTransferEvent'),
     url(r'^splitevent/', views.postSplitEvent, name='postSplitEvent'),
