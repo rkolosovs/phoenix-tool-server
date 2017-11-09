@@ -431,6 +431,8 @@ def deleteEvent(request):
             MergeEvent.objects.filter(id=event_id).delete()
         elif event_type == 'transfer':
             TransferEvent.objects.filter(id=event_id).delete()
+        elif event_type == 'shoot':
+            TransferEvent.objects.filter(id=event_id).delete()
         # update_timestamp()
         return HttpResponse(status=200)
     else:
@@ -464,6 +466,10 @@ def checkEvent(request):
             be = TransferEvent.objects.filter(id=event_id)[0]
             be.processed = True
             be.save()
+        elif event_type == 'shoot':
+            be = TransferEvent.objects.filter(id=event_id)[0]
+            be.processed = True
+            be.save()
         # update_timestamp()
         return HttpResponse(status=200)
     else:
@@ -476,6 +482,7 @@ def getPendingEvents(request):
     pending_split_events = serializers.serialize('python', SplitEvent.objects.filter(processed=False))
     pending_merge_events = serializers.serialize('python', MergeEvent.objects.filter(processed=False))
     pending_tansfer_events = serializers.serialize('python', TransferEvent.objects.filter(processed=False))
+    pending_shoot_events = serializers.serialize('python', ShootEvent.objects.filter(processed=False))
     # TODO: Do this for all other types of events (when you come around to using them).
     json_events = []
     for e in pending_move_events:
@@ -572,6 +579,25 @@ def getPendingEvents(request):
                 'mounts': e['fields']['mounts'],
                 'lkp': e['fields']['lkp'],
                 'skp': e['fields']['skp']
+            },
+            'pk': e['pk']
+        })
+    for e in pending_shoot_events:
+        shootArmy = serializers.serialize('python', Troop.objects.filter(id=(e['fields']['shooter'])))
+        if len(shootArmy) > 0:
+            id1 = shootArmy[0]['fields']['armyId']
+            realm = shootArmy[0]['fields']['realm']
+        else:
+            id1 = '*none*'
+        json_events.append({
+            'type': 'shoot',
+            'content': {
+                'armyId': id1,
+                'realm': realm,
+                'LKPcount': e['fields']['lkp_count'],
+                'SKPcount': e['fields']['skp_count'],
+                'toX': e['fields']['to_x'],
+                'toY': e['fields']['to_y']
             },
             'pk': e['pk']
         })
