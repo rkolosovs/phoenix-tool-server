@@ -23,6 +23,7 @@ urlpatterns = [
     url(r'^mergeevent/', views.postMergeEvent, name='postMergeEvent'),
     url(r'^transferevent/', views.postTransferEvent, name='postTransferEvent'),
     url(r'^splitevent/', views.postSplitEvent, name='postSplitEvent'),
+    url(r'^mountevent/', views.postMountEvent, name='postMountEvent'),
     url(r'^checkevent/', views.checkEvent, name='checkEvent'),
     url(r'^deleteevent/', views.deleteEvent, name='deleteEvent'),
     url(r'^getevents/', views.getPendingEvents, name='getPendingEvents'),

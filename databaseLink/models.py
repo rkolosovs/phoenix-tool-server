@@ -320,7 +320,11 @@ class MergeEvent(models.Model):
             processed_str = 'processed'
         else:
             processed_str = 'not processed'
-        return Troop.short(self.fromArmy) + ', merges into ' + Troop.short(self.toArmy) + ' on Field (' + str(self.x) +\
+        if self.fromArmy is None:
+            troop_str_from = '*no army*'
+        else:
+            troop_str_from = Realm.short(self.fromArmy.realm) + ', ' + str(self.fromArmy.armyId)
+        return troop_str_from + ', merges into ' + Troop.short(self.toArmy) + ' on Field (' + str(self.x) +\
                ',' + str(self.y) + ').' + processed_str + ', ' + str(self.date)
 
 class TransferEvent(models.Model):
@@ -400,6 +404,32 @@ class SplitEvent(models.Model):
             result += str(self.lkp) + ' lkp, '
         if self.skp > 0:
             result += str(self.skp) + ' skp '
+        result += ' on Field (' + str(self.x) + ',' + str(self.y) + '). ' + processed_str + ', ' + str(self.date)
+        return result
+
+class MountEvent(models.Model):
+    #used to record mounting or unmounting of troops
+    realm = models.ForeignKey(Realm, on_delete=models.CASCADE)
+    fromArmy = models.ForeignKey(Troop, null=True, on_delete=models.SET_NULL)
+    newArmy = models.IntegerField()
+    troops = models.IntegerField()
+    leaders = models.IntegerField()
+    processed = models.BooleanField(default=False)
+    date = models.DateTimeField(auto_now_add=True, null=True)
+    x = models.IntegerField(null=True)
+    y = models.IntegerField(null=True)
+
+    def __str__(self):
+        if self.processed is True:
+            processed_str = 'processed'
+        else:
+            processed_str = 'not processed'
+        if self.fromArmy is None:
+            troop_str_from = '*no army*'
+        else:
+            troop_str_from = Realm.short(self.fromArmy.realm) + ', ' + str(self.fromArmy.armyId)
+        result = troop_str_from + ', mounts/unmounts  ' + str(self.newArmy) + ' with ' + str(self.troops) +\
+                 " troops, and " + str(self.leaders) + " leaders,"
         result += ' on Field (' + str(self.x) + ',' + str(self.y) + '). ' + processed_str + ', ' + str(self.date)
         return result
 
