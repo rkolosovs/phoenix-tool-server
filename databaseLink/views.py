@@ -801,7 +801,7 @@ def enterSplitEvent(event):
                     skp=event['skp'], lkp=event['lkp'], x = event['x'], y = event['y'])
     newArmy = Troop(realm=Realm.objects.get(tag=event['realm']), armyId=event['newArmysId'], count=event['troops'],
                     leaders=event['leaders'], mounts=event['mounts'], skp=event['skp'], lkp=event['lkp'],
-                    x=fromArmyId[0].x, y=fromArmyId[0].y, movementPoints=fromArmyId[0].movementPoints,
+                    x=event['x'], y=event['y'], movementPoints=fromArmyId[0].movementPoints,
                     heightPoints=fromArmyId[0].heightPoints, status='tobe')
     se.save()
     newArmy.save()
@@ -851,7 +851,7 @@ def enterMountEvent(event):
     me = MountEvent(realm=Realm.objects.get(tag=event['realm']), fromArmy=fromArmyId[0], newArmy=event['newArmysId'],
                     troops=event['troops'], leaders=event['leaders'], x = event['x'], y = event['y'])
     newArmy = Troop(realm=Realm.objects.get(tag=event['realm']), armyId=event['newArmysId'], count=event['troops'],
-                    leaders=event['leaders'], mounts=mounts, skp=0, lkp=0, x=fromArmyId[0].x, y=fromArmyId[0].y,
+                    leaders=event['leaders'], mounts=mounts, skp=0, lkp=0, x=event['x'], y=event['y'],
                     movementPoints=fromArmyId[0].movementPoints, heightPoints=fromArmyId[0].heightPoints, status='tobe')
     print(newArmy)
     me.save()

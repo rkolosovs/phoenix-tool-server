@@ -324,7 +324,12 @@ class MergeEvent(models.Model):
             troop_str_from = '*no army*'
         else:
             troop_str_from = Realm.short(self.fromArmy.realm) + ', ' + str(self.fromArmy.armyId)
-        return troop_str_from + ', merges into ' + Troop.short(self.toArmy) + ' on Field (' + str(self.x) +\
+        if self.toArmy is None:
+            troop_str_to = '*no army*'
+        else:
+            troop_str_to = Realm.short(self.toArmy.realm) + ', ' + str(self.toArmy.armyId)
+
+        return troop_str_from + ', merges into ' + troop_str_to + ' on Field (' + str(self.x) +\
                ',' + str(self.y) + ').' + processed_str + ', ' + str(self.date)
 
 class TransferEvent(models.Model):
