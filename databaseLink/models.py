@@ -16,6 +16,8 @@ def create_auth_token(sender, instance=None, created=False, **kwargs):
 class Realm(models.Model):
     tag = models.CharField(max_length=3)
     name = models.CharField(max_length=250)
+    color = models.CharField(max_length=11, default='000,000,000')
+    homeTurf = models.IntegerField(default=1)
     active = models.BooleanField(default=True)
 
     def short(self):

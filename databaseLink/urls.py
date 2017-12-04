@@ -27,6 +27,7 @@ urlpatterns = [
     url(r'^checkevent/', views.checkEvent, name='checkEvent'),
     url(r'^deleteevent/', views.deleteEvent, name='deleteEvent'),
     url(r'^getevents/', views.getPendingEvents, name='getPendingEvents'),
+    url(r'^getrealms/', views.getRealms, name='getRealms'),
     url(r'^new/', views.UserFormView.as_view(), name='createNewUser'),
     url(r'^login/$', views.loginView, name='login'),
     url(r'^logout/$', auth_views.logout, name='logout'),

@@ -890,6 +890,12 @@ def nextTurn():
     te.save()
 
 
+def getRealms(request):
+    all_realm_data = serializers.serialize('python', Realm.objects.all())
+    data = [d['fields'] for d in all_realm_data]
+    return HttpResponse(json.dumps(data))
+
+
 def getRealmForId(d):
     if d['realm'] is None:
         return None
