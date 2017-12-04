@@ -586,7 +586,7 @@ def getPendingEvents(request):
         shootArmy = serializers.serialize('python', Troop.objects.filter(id=(e['fields']['shooter'])))
         if len(shootArmy) > 0:
             id1 = shootArmy[0]['fields']['armyId']
-            realm = getRealmForId(troops[0]['fields'])
+            realm = getRealmForId(shootArmy[0]['fields'])
         else:
             id1 = '*none*'
         json_events.append({
@@ -598,6 +598,7 @@ def getPendingEvents(request):
                 'SKPcount': e['fields']['skp_count'],
                 'toX': e['fields']['to_x'],
                 'toY': e['fields']['to_y'],
+                'target': e['fields']['target'],
                 'fromX': e['fields']['from_x'],
                 'fromY': e['fields']['from_y']
             },
@@ -809,7 +810,7 @@ def enterShootEvent(event):
     if len(army) == 0:
         return HttpResponse(status=400)  # Invalid input. Troop does not exist.
     me = ShootEvent(shooter=army[0], lkp_count=event['LKPcount'], skp_count=event['SKPcount'], to_x=event['toX'], to_y=event['toY'],
-                    from_x=event['fromX'], from_y=event['fromY'])
+                    target=event['target'], from_x=event['fromX'], from_y=event['fromY'])
     me.save()
     # update_timestamp()
     return HttpResponse(status=200)

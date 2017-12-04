@@ -246,6 +246,7 @@ class ShootEvent(models.Model):
     from_y = models.IntegerField()
     to_x = models.IntegerField()
     to_y = models.IntegerField()
+    target = models.CharField(max_length=10, null=True, blank=True)
     lkp_count = models.IntegerField()
     skp_count = models.IntegerField()
     processed = models.BooleanField(default=False)
@@ -261,7 +262,8 @@ class ShootEvent(models.Model):
         else:
             shooter_str = Realm.short(self.shooter.realm) + ', ' + str(self.shooter.armyId)
 
-        return shooter_str + ', ' + str(self.from_x) + ', ' + str(self.from_y) + '(' + str(self.to_x) + ', ' + str(self.to_y) + '), ' + str(self.lkp_count) + ', ' + str(self.skp_count) \
+        return shooter_str + ', ' + str(self.from_x) + ', ' + str(self.from_y) + '(' + str(self.to_x) + ', ' + str(self.target)+ ', ' \
+               + str(self.to_y) + '), ' + str(self.lkp_count) + ', ' + str(self.skp_count) \
                + ', ' + processed_str + ', ' + str(self.date)
 
 
