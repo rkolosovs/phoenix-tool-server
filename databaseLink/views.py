@@ -4,7 +4,7 @@ import json
 import time
 from .models import Field, River, Building, Troop, Realm, RealmTerritory, RealmMembership, MoveEvent, BattleEvent, \
     BuildEvent, RecruitmentEvent, TurnEvent, CommentEvent, TurnOrder, LastSavedTimeStamp, SplitEvent, MergeEvent, \
-    TransferEvent, ShootEvent
+    TransferEvent, MountEvent, ShootEvent
 import django.middleware.csrf
 import math
 from django.shortcuts import render, redirect
@@ -433,6 +433,8 @@ def deleteEvent(request):
             TransferEvent.objects.filter(id=event_id).delete()
         elif event_type == 'shoot':
             TransferEvent.objects.filter(id=event_id).delete()
+        elif event_type == 'mount':
+            MountEvent.objects.filter(id=event_id).delete()
         # update_timestamp()
         return HttpResponse(status=200)
     else:
@@ -456,6 +458,9 @@ def checkEvent(request):
             be.save()
         elif event_type == 'split':
             be = SplitEvent.objects.filter(id=event_id)[0]
+            toArmy = Troop.objects.filter(armyId=be.newArmy).get(realm=be.realm)
+            toArmy.status = 'active'
+            toArmy.save()
             be.processed = True
             be.save()
         elif event_type == 'merge':
@@ -468,6 +473,13 @@ def checkEvent(request):
             be.save()
         elif event_type == 'shoot':
             be = TransferEvent.objects.filter(id=event_id)[0]
+            be.processed = True
+            be.save()
+        elif event_type == 'mount':
+            be = MountEvent.objects.filter(id=event_id)[0]
+            toArmy = Troop.objects.filter(armyId=be.newArmy).get(realm=be.realm)
+            toArmy.status = 'active'
+            toArmy.save()
             be.processed = True
             be.save()
         # update_timestamp()
@@ -483,6 +495,7 @@ def getPendingEvents(request):
     pending_merge_events = serializers.serialize('python', MergeEvent.objects.filter(processed=False))
     pending_tansfer_events = serializers.serialize('python', TransferEvent.objects.filter(processed=False))
     pending_shoot_events = serializers.serialize('python', ShootEvent.objects.filter(processed=False))
+    pending_mount_events = serializers.serialize('python', MountEvent.objects.filter(processed=False))
     # TODO: Do this for all other types of events (when you come around to using them).
     json_events = []
     for e in pending_move_events:
@@ -531,7 +544,9 @@ def getPendingEvents(request):
             'content': {
                 'realm': e['fields']['realm'],
                 'fromArmy': id1,
-                'toArmy': id2
+                'toArmy': id2,
+                'x': e['fields']['x'],
+                'y': e['fields']['y']
             },
             'pk': e['pk']
         })
@@ -558,7 +573,9 @@ def getPendingEvents(request):
                 'leaders': e['fields']['leaders'],
                 'mounts': e['fields']['mounts'],
                 'lkp': e['fields']['lkp'],
-                'skp': e['fields']['skp']
+                'skp': e['fields']['skp'],
+                'x': e['fields']['x'],
+                'y': e['fields']['y']
             },
             'pk': e['pk']
         })
@@ -578,7 +595,28 @@ def getPendingEvents(request):
                 'leaders': e['fields']['leaders'],
                 'mounts': e['fields']['mounts'],
                 'lkp': e['fields']['lkp'],
-                'skp': e['fields']['skp']
+                'skp': e['fields']['skp'],
+                'x': e['fields']['x'],
+                'y': e['fields']['y']
+            },
+            'pk': e['pk']
+        })
+    for e in pending_mount_events:
+        fromArmy = serializers.serialize('python', Troop.objects.filter(id=(e['fields']['fromArmy'])))
+        if len(fromArmy) > 0:
+            id1 = fromArmy[0]['fields']['armyId']
+        else:
+            id1 = '*none*'
+        json_events.append({
+            'type': 'mount',
+            'content': {
+                'realm': e['fields']['realm'],
+                'fromArmy': id1,
+                'newArmy': e['fields']['newArmy'],
+                'troops': e['fields']['troops'],
+                'leaders': e['fields']['leaders'],
+                'x': e['fields']['x'],
+                'y': e['fields']['y']
             },
             'pk': e['pk']
         })
@@ -752,7 +790,8 @@ def enterMergeEvent(event):
     toArmyId = Troop.objects.filter(armyId=event['toArmyId']).filter(realm=realm[0]['pk'])
     if len(toArmyId) == 0:
         return HttpResponse(status=400)  # Invalid input. Troop does not exist.
-    me = MergeEvent(realm=Realm.objects.get(tag=event['realm']), fromArmy=fromArmyId[0], toArmy=toArmyId[0])
+    me = MergeEvent(realm=Realm.objects.get(tag=event['realm']), fromArmy=fromArmyId[0], toArmy=toArmyId[0],
+                    x = event['x'], y = event['y'])
     me.save()
     update_timestamp()
     return HttpResponse(status=200)
@@ -770,10 +809,31 @@ def enterTransferEvent(event):
     te = TransferEvent(realm=Realm.objects.get(tag=event['realm']), fromArmy=fromArmyId[0], toArmy=toArmyId[0],
                        troops=event['troops'], leaders=event['leaders'], mounts=event['mounts'],
                        skp=event['skp'], lkp=event['lkp'], armyFromType=math.floor(event['fromArmyId']/100),
-                       armyToType=math.floor(event['toArmyId'] / 100))
+                       armyToType=math.floor(event['toArmyId'] / 100),
+                       x = event['x'], y = event['y'])
     te.save()
     update_timestamp()
     return HttpResponse(status=200)
+
+def postMountEvent(request):
+    sessionKey = request.POST.get('authorization')
+    user = Token.objects.get(key=sessionKey).user
+    event = json.loads(request.POST.get('content'))
+    realmMembership = serializers.serialize('python', RealmMembership.objects.filter(user=user))
+    if (sessionKey == '0') | (sessionKey is None):
+        return HttpResponse(status=401)  # Authorisation failure. Please log in.
+    elif user.is_staff:
+        # enter into db
+        print("user is staff:")
+        return enterMountEvent(event)
+    else:
+        # check if user is of correct realm, then enter into db
+        if getRealmForId(realmMembership[0]['fields']) == event['realm']:
+            print("user is fitting realm:")
+            return enterMountEvent(event)
+        else:
+            print("user is wrong realm:")
+            return HttpResponse(status=403)  # Access denied. You can only move your own army.
 
 def enterSplitEvent(event):
     realm = serializers.serialize('python', Realm.objects.filter(tag=event['realm']))
@@ -784,8 +844,13 @@ def enterSplitEvent(event):
         return HttpResponse(status=400)  # Invalid input. Troop does not exist.
     se = SplitEvent(realm=Realm.objects.get(tag=event['realm']), fromArmy=fromArmyId[0], newArmy=event['newArmysId'],
                     troops=event['troops'], leaders=event['leaders'], mounts=event['mounts'],
-                    skp=event['skp'], lkp=event['lkp'])
+                    skp=event['skp'], lkp=event['lkp'], x = event['x'], y = event['y'])
+    newArmy = Troop(realm=Realm.objects.get(tag=event['realm']), armyId=event['newArmysId'], count=event['troops'],
+                    leaders=event['leaders'], mounts=event['mounts'], skp=event['skp'], lkp=event['lkp'],
+                    x=event['x'], y=event['y'], movementPoints=fromArmyId[0].movementPoints,
+                    heightPoints=fromArmyId[0].heightPoints, status='tobe')
     se.save()
+    newArmy.save()
     update_timestamp()
     return HttpResponse(status=200)
 
@@ -824,6 +889,34 @@ def enterBattleEvent(event, armies):
     # update_timestamp()
     return HttpResponse(status=200)
 
+def enterMountEvent(event):
+    realm = serializers.serialize('python', Realm.objects.filter(tag=event['realm']))
+    print("before realm")
+    if len(realm) == 0:
+        return HttpResponse(status=400)  # Invalid input. Realm given does not exist.
+    print("realm exists")
+    print("before from army")
+    print("fromArmyId = " + str(event['fromArmyId']) + ", realm = " + str(realm[0]['pk']))
+    fromArmyId = Troop.objects.filter(armyId=event['fromArmyId']).filter(realm=realm[0]['pk'])
+    print(fromArmyId)
+    if len(fromArmyId) == 0:
+        return HttpResponse(status=400)  # Invalid input. Troop does not exist.
+    print("from army exists")
+    mounts = 0
+    if (fromArmyId[0].armyId >= 200) and (fromArmyId[0].armyId < 300):
+        mounts = event['troops']
+        print("mounts = " + mounts)
+    me = MountEvent(realm=Realm.objects.get(tag=event['realm']), fromArmy=fromArmyId[0], newArmy=event['newArmysId'],
+                    troops=event['troops'], leaders=event['leaders'], x = event['x'], y = event['y'])
+    newArmy = Troop(realm=Realm.objects.get(tag=event['realm']), armyId=event['newArmysId'], count=event['troops'],
+                    leaders=event['leaders'], mounts=mounts, skp=0, lkp=0, x=event['x'], y=event['y'],
+                    movementPoints=fromArmyId[0].movementPoints, heightPoints=fromArmyId[0].heightPoints, status='tobe')
+    print(newArmy)
+    me.save()
+    newArmy.save()
+    print("newArmy saved")
+    update_timestamp()
+    return HttpResponse(status=200)
 
 def nextTurn():
     latestTurn = TurnEvent.objects.filter(date__isnull=False).latest('date')
@@ -853,6 +946,12 @@ def nextTurn():
         raise TurnOrderException
     te = TurnEvent(status=newstatus, turn=newturn[0])
     te.save()
+
+
+def getRealms(request):
+    all_realm_data = serializers.serialize('python', Realm.objects.all())
+    data = [d['fields'] for d in all_realm_data]
+    return HttpResponse(json.dumps(data))
 
 
 def getRealmForId(d):

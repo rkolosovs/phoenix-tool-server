@@ -16,6 +16,8 @@ def create_auth_token(sender, instance=None, created=False, **kwargs):
 class Realm(models.Model):
     tag = models.CharField(max_length=3)
     name = models.CharField(max_length=250)
+    color = models.CharField(max_length=11, default='000,000,000')
+    homeTurf = models.IntegerField(default=1)
     active = models.BooleanField(default=True)
 
     def short(self):
@@ -150,6 +152,9 @@ class Troop(models.Model):
         choices=STATUS_CHOICES,
         default="active",
     )
+
+    def short(self):
+        return str(self.armyId)
 
     def __str__(self):
         is_guard = ''
@@ -337,9 +342,25 @@ class MergeEvent(models.Model):
     toArmy = models.ForeignKey(Troop, null=True, on_delete=models.SET_NULL, related_name='+')
     processed = models.BooleanField(default=False)
     date = models.DateTimeField(auto_now_add=True, null=True)
+    x = models.IntegerField(null=True)
+    y = models.IntegerField(null=True)
 
     def __str__(self):
-        return str(self.realm) + ', army ' + str(self.fromArmy) + ', merges into ' + str(self.toArmy)
+        if self.processed is True:
+            processed_str = 'processed'
+        else:
+            processed_str = 'not processed'
+        if self.fromArmy is None:
+            troop_str_from = '*no army*'
+        else:
+            troop_str_from = Realm.short(self.fromArmy.realm) + ', ' + str(self.fromArmy.armyId)
+        if self.toArmy is None:
+            troop_str_to = '*no army*'
+        else:
+            troop_str_to = Realm.short(self.toArmy.realm) + ', ' + str(self.toArmy.armyId)
+
+        return troop_str_from + ', merges into ' + troop_str_to + ' on Field (' + str(self.x) +\
+               ',' + str(self.y) + ').' + processed_str + ', ' + str(self.date)
 
 class TransferEvent(models.Model):
     # Used to record the transfer of troops from one army to another
@@ -355,9 +376,36 @@ class TransferEvent(models.Model):
     skp = models.IntegerField()
     processed = models.BooleanField(default=False)
     date = models.DateTimeField(auto_now_add=True, null=True)
+    x = models.IntegerField(null=True)
+    y = models.IntegerField(null=True)
+
 
     def __str__(self):
-        return str(self.realm) + ', army ' + str(self.fromArmy) + ', transfers troops to ' + str(self.toArmy)
+        if self.processed is True:
+            processed_str = 'processed'
+        else:
+            processed_str = 'not processed'
+        if self.fromArmy is None:
+            troop_str_from = '*no army*'
+        else:
+            troop_str_from = Realm.short(self.fromArmy.realm) + ', ' + str(self.fromArmy.armyId)
+        if self.toArmy is None:
+            troop_str_to = '*no army*'
+        else:
+            troop_str_to = Realm.short(self.toArmy.realm) + ', ' + str(self.toArmy.armyId)
+        result  =troop_str_from + ', transfers '
+        if self.troops > 0:
+            result += str(self.troops) + ' troops, '
+        if self.leaders > 0:
+            result += str(self.leaders) + ' leaders, '
+        if self.mounts > 0:
+            result += str(self.mounts) + ' mounts, '
+        if self.lkp > 0:
+            result += str(self.lkp) + ' lkp, '
+        if self.skp > 0:
+            result += str(self.skp) + ' skp '
+        result += 'to ' + troop_str_to  + ' on Field (' + str(self.x) + ',' + str(self.y) + '). ' + processed_str + ', ' + str(self.date)
+        return result
 
 class SplitEvent(models.Model):
     # Used to record the splitting of an army
@@ -371,6 +419,54 @@ class SplitEvent(models.Model):
     skp = models.IntegerField()
     processed = models.BooleanField(default=False)
     date = models.DateTimeField(auto_now_add=True, null=True)
+    x = models.IntegerField(null=True)
+    y = models.IntegerField(null=True)
+
+    def __str__(self):
+        if self.processed is True:
+            processed_str = 'processed'
+        else:
+            processed_str = 'not processed'
+        if self.fromArmy is None:
+            troop_str_from = '*no army*'
+        else:
+            troop_str_from = Realm.short(self.fromArmy.realm) + ', ' + str(self.fromArmy.armyId)
+        result = troop_str_from + ', splits of army  ' + str(self.newArmy) + \
+               ' with ' + str(self.troops) + " troops, " + str(self.leaders) + " leaders,"
+        if self.mounts > 0:
+            result += str(self.mounts) + ' mounts, '
+        if self.lkp > 0:
+            result += str(self.lkp) + ' lkp, '
+        if self.skp > 0:
+            result += str(self.skp) + ' skp '
+        result += ' on Field (' + str(self.x) + ',' + str(self.y) + '). ' + processed_str + ', ' + str(self.date)
+        return result
+
+class MountEvent(models.Model):
+    #used to record mounting or unmounting of troops
+    realm = models.ForeignKey(Realm, on_delete=models.CASCADE)
+    fromArmy = models.ForeignKey(Troop, null=True, on_delete=models.SET_NULL)
+    newArmy = models.IntegerField()
+    troops = models.IntegerField()
+    leaders = models.IntegerField()
+    processed = models.BooleanField(default=False)
+    date = models.DateTimeField(auto_now_add=True, null=True)
+    x = models.IntegerField(null=True)
+    y = models.IntegerField(null=True)
+
+    def __str__(self):
+        if self.processed is True:
+            processed_str = 'processed'
+        else:
+            processed_str = 'not processed'
+        if self.fromArmy is None:
+            troop_str_from = '*no army*'
+        else:
+            troop_str_from = Realm.short(self.fromArmy.realm) + ', ' + str(self.fromArmy.armyId)
+        result = troop_str_from + ', mounts/unmounts  ' + str(self.newArmy) + ' with ' + str(self.troops) +\
+                 " troops, and " + str(self.leaders) + " leaders,"
+        result += ' on Field (' + str(self.x) + ',' + str(self.y) + '). ' + processed_str + ', ' + str(self.date)
+        return result
 
 class TurnEvent(models.Model):
     # Used to record turn change

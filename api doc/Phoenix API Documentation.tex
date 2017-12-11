@@ -37,7 +37,23 @@ Dieses Dokument beschreibt die Schnittstelle des Phönixtool-Servers. Der Inform
 Abschnitt \ref{s:data_read} beschreibt die Repräsentation des Spielstandes und dessen Auslesen. Im Abschnitt \ref{s:data_write} erklären wir, wie man einen neuen Spielstand auf den Server schreibt. Der Abschnitt \ref{s:security} beschreibt unser Sicherheitskonzept und den Login-View. Die Struktur unserer Spielzüge ist beschrieben im Abschnitt \ref{s:turnstructure}. Die darin verwendeten Events werden einzeln im Abschnitt \ref{s:events} beschreiben.
 
 \section{Lesen von Spieldaten}\label{s:data_read}
-In diesem Abschnitt beschreiben wir unsere Repräsentation des Spielstandes und den Format, in dem es vom Server geliefert wird. Der Unterabschnitt \ref{ss:read_armies} beschreibt das Format, in dem Armeen und Flotten geliefert werden. Die Gebäude sind im Unterabschnitt \ref{ss:read_buildings}. Die Geländetypen des Spielfelds sind in \ref{ss:read_field} und die Flüsse sind in \ref{ss:read_rivers} beschrieben. Zu Letzt sind die Gebiete der Reiche in \ref{ss:read_borders} beschreiben.
+In diesem Abschnitt beschreiben wir unsere Repräsentation des Spielstandes und den Format, in dem es vom Server geliefert wird. Die Liste der Reiche ist im Unterabschnitt \ref{ss:read_realms} beschreiben. Der Unterabschnitt \ref{ss:read_armies} beschreibt das Format, in dem Armeen und Flotten geliefert werden. Die Gebäude sind im Unterabschnitt \ref{ss:read_buildings}. Die Geländetypen des Spielfelds sind in \ref{ss:read_field} und die Flüsse sind in \ref{ss:read_rivers} beschrieben. Zu Letzt sind die Gebiete der Reiche in \ref{ss:read_borders} beschreiben.
+\subsection{Reiche}\label{ss:read_realms}
+Die Liste der am Spiel teilnehmenden (oder in der Vergangenheit teilgenommenen) Reiche erhält man mit einer Anfrage an "/databaseLink/getrealms/". Die Antwort kommt in folgender Form:
+\begin{lstlisting}
+[{
+  'active': True für im Spiel aktive Reiche,
+  'color': Reichsfarbe als "r,g,b",
+  'name': Voller Reichsname,
+  'homeTurf': Heimatgelände (0 - 8),
+  'tag': Reichskürzel (3 Zeichen)
+}, ...]
+\end{lstlisting}
+Die Reihenfolge der Reiche im Array sollte deren Reihenfolge in der DB entsprechen. Das Reich mit dem DB-Key n sollte also im Array an der Stelle n-1 stehen. Die Reiche sollten aus der Datenbank nicht gelöscht werden sonder auf inaktiv gesetzt werden.\\
+Das Feld 'active' wird auf False gesetzt falls das Reich gänzlich aus dem Spiel ausscheidet und nur für historische Nachvollziehbarkeit in der Datenbank gelistet wird. Wird das Reich nur umbenannt, an andere Spieler übergeben, ändert seine Farbe oder ähnliches, so soll der Datenbankeintrag stattdessen lieber modifiziert werden.\\
+Die Reichsfarbe, in welcher das Reich auf der Karte dargestellt werden sollte wird als ein String im 'color'-Feld gespeichert. Der String ist genau 11 Zeichen lang und enthält die RGB-Werte der Farbe im Dezimalformat (000 - 255) durch Komata ohne Leerzeichen getrennt. Schwarz wäre also als "000,000,000" während "255,000,000" rot und "090,090,090" ein Grauton wäre.\\
+Im Feld 'homeTurf' wird das Typ des Heimatgeländes eines Reiches (in der Regel der Feldtyp, auf dem die Hauptstadt steht) angegeben. Die Nummerierung der Feldtypen wird in \ref{ss:read_field} beschrieben.\\
+Das 'tag'-Feld gibt ein Reichskürzel aus genau 3 Zeichen an. Dieses ist als eine Möglichkeit Reiche zu identifizieren gedacht, die kürzer und beständiger als der volle Name und gleichzeitig menschenlesbarer als der Datenbank-Key ist.
 \subsection{Armeen}\label{ss:read_armies}
 Die Heere (Armeen) und Flotten erhält man mit einer Anfrage an "/databaseLink/armydata/". Die Anfrage muss wie folgt aussehen:
 \begin{lstlisting}
