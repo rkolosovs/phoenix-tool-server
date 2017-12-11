@@ -242,6 +242,7 @@ class BuildEvent(models.Model):
 class ShootEvent(models.Model):
     # Used to record all the shooting
     shooter = models.ForeignKey(Troop, on_delete=models.CASCADE, null=True)
+    realm = models.ForeignKey(Realm, on_delete=models.CASCADE)
     from_x = models.IntegerField()
     from_y = models.IntegerField()
     to_x = models.IntegerField()
@@ -262,8 +263,8 @@ class ShootEvent(models.Model):
         else:
             shooter_str = Realm.short(self.shooter.realm) + ', ' + str(self.shooter.armyId)
 
-        return shooter_str + ', ' + str(self.from_x) + ', ' + str(self.from_y) + '(' + str(self.to_x) + ', ' + str(self.target)+ ', ' \
-               + str(self.to_y) + '), ' + str(self.lkp_count) + ', ' + str(self.skp_count) \
+        return shooter_str + ', ' + str(self.from_x) + ', ' + str(self.from_y) + '(' + str(self.to_x) + ', ' + str(self.to_y) + '), ' \
+               + str(self.target)+ ', '+ str(self.lkp_count) + ', ' + str(self.skp_count) \
                + ', ' + processed_str + ', ' + str(self.date)
 
 
