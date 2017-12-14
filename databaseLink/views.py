@@ -432,7 +432,7 @@ def deleteEvent(request):
         elif event_type == 'transfer':
             TransferEvent.objects.filter(id=event_id).delete()
         elif event_type == 'shoot':
-            TransferEvent.objects.filter(id=event_id).delete()
+            ShootEvent.objects.filter(id=event_id).delete()
         elif event_type == 'mount':
             MountEvent.objects.filter(id=event_id).delete()
         # update_timestamp()
@@ -472,7 +472,7 @@ def checkEvent(request):
             be.processed = True
             be.save()
         elif event_type == 'shoot':
-            be = TransferEvent.objects.filter(id=event_id)[0]
+            be = ShootEvent.objects.filter(id=event_id)[0]
             be.processed = True
             be.save()
         elif event_type == 'mount':
