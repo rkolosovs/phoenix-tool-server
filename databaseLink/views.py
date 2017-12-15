@@ -502,7 +502,7 @@ def getPendingEvents(request):
         troops = serializers.serialize('python', Troop.objects.filter(id=(e['fields']['troop'])))
         if len(troops) > 0:
             id = troops[0]['fields']['armyId']
-            realm = getRealmForId(troops[0]['fields'])
+            realm = troops[0]['fields']['realm']
         else:
             id = '*none*'
             realm = '*none*'
