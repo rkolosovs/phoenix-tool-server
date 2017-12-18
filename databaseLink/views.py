@@ -26,6 +26,7 @@ def armyData(request):
             d['lkp'] = -1
             d['skp'] = -1
             d['isGuard'] = False
+        data['realm'] = getRealmForId(data['realm'])
         returnData = json.dumps(data)
         return HttpResponse(returnData)
     else:
@@ -51,6 +52,7 @@ def armyData(request):
                     d['lkp'] = -1
                     d['skp'] = -1
                     d['isGuard'] = False
+        data['realm'] = getRealmForId(data['realm'])
         returnData = json.dumps(data)
         return HttpResponse(returnData)
 
@@ -64,6 +66,7 @@ def getLastSavedTimeStamp(request):
 def buildingData(request):
     all_buildings_data = serializers.serialize('python', Building.objects.all())
     data = [d['fields'] for d in all_buildings_data]
+    data['realm'] = getRealmForId(data['realm'])
     returnData = json.dumps(data)
     return HttpResponse(returnData)
 
