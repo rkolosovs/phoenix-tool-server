@@ -26,7 +26,8 @@ def armyData(request):
             d['lkp'] = -1
             d['skp'] = -1
             d['isGuard'] = False
-        data['realm'] = getRealmForId(data['realm'])
+        for d in data:
+            d['realm'] = getRealmForId(d['realm'])
         returnData = json.dumps(data)
         return HttpResponse(returnData)
     else:
@@ -52,7 +53,8 @@ def armyData(request):
                     d['lkp'] = -1
                     d['skp'] = -1
                     d['isGuard'] = False
-        data['realm'] = getRealmForId(data['realm'])
+        for d in data:
+            d['realm'] = getRealmForId(d['realm'])
         returnData = json.dumps(data)
         return HttpResponse(returnData)
 
@@ -66,7 +68,8 @@ def getLastSavedTimeStamp(request):
 def buildingData(request):
     all_buildings_data = serializers.serialize('python', Building.objects.all())
     data = [d['fields'] for d in all_buildings_data]
-    data['realm'] = getRealmForId(data['realm'])
+    for d in data:
+        d['realm'] = getRealmForId(d['realm'])
     returnData = json.dumps(data)
     return HttpResponse(returnData)
 
@@ -163,7 +166,7 @@ def saveBuildingData(request):
                         else:
                             newBuilding = Building()
                         newBuilding.type = building[0]
-                        newBuilding.realm = Realm.objects.get(pk=building[1])
+                        newBuilding.realm = Realm.objects.get(tag=building[1])
                         newBuilding.x = building[2]
                         newBuilding.y = building[3]
                         newBuilding.save()
@@ -175,7 +178,7 @@ def saveBuildingData(request):
                         else:
                             newBuilding = Building()
                         newBuilding.type = building[0]
-                        newBuilding.realm = Realm.objects.get(pk=building[1])
+                        newBuilding.realm = Realm.objects.get(tag=building[1])
                         newBuilding.x = building[2]
                         newBuilding.y = building[3]
                         newBuilding.direction = building[4]
@@ -189,7 +192,7 @@ def saveBuildingData(request):
                         else:
                             newBuilding = Building()
                         newBuilding.type = building[0]
-                        newBuilding.realm = Realm.objects.get(pk=building[1])
+                        newBuilding.realm = Realm.objects.get(tag=building[1])
                         newBuilding.firstX = building[2]
                         newBuilding.firstY = building[3]
                         newBuilding.secondX = building[4]
@@ -229,7 +232,7 @@ def saveArmyData(request):
             # axyol = listItem.split(",")
             # Army axyol[0-5], X = axyol[6], Y = axyol[7], Owner = axyol[8], isLoaded in axyol[9]
             findArmyInDB = currentArmyData.filter(armyId=listItem['armyId']).filter(status="active")\
-                .filter(realm=Realm.objects.get(pk=listItem['ownerPk']))
+                .filter(realm=Realm.objects.get(tag=listItem['owner']).pk)
             if len(findArmyInDB) > 0:
                 army = findArmyInDB[0]
             else:
@@ -242,7 +245,7 @@ def saveArmyData(request):
             army.mounts = listItem['mounts']
             army.x = listItem['x']
             army.y = listItem['y']
-            army.realm = Realm.objects.get(pk=listItem['ownerPk'])
+            army.realm = Realm.objects.get(tag=listItem['owner'])
             army.movementPoints = listItem['movementPoints']
             army.heightPoints = listItem['heightPoints']
             if listItem['isLoadedIn'] == "null":
@@ -958,7 +961,9 @@ def getRealms(request):
 
 
 def getRealmForId(d):
-    if d['realm'] is None:
+    if type(d) is int:
+        return Realm.objects.get(id=d).tag
+    elif d['realm'] is None:
         return None
     else:
         return Realm.objects.get(id=[d][0]['realm']).tag
