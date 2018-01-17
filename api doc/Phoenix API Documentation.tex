@@ -61,8 +61,8 @@ Die Heere (Armeen) und Flotten erhält man mit einer Anfrage an "/databaseLink/a
 \end{lstlisting}
 Das Authentifizierungs-Token identifiziert einen eingeloggten Nutzer und ist in \ref{s:security} beschrieben. Die Antwort hat das folgende Format:
 \begin{lstlisting}
-{
-  'realm': Kontrolierendes Reich (DB-Key),
+[{
+  'realm': Kontrolierendes Reich (Kürzel),
   'armyId': Armeenummer (Phoenix),
   'count': Truppen-/Schiffsanzahl,
   'leaders': Heerführeranzahl,
@@ -72,10 +72,12 @@ Das Authentifizierungs-Token identifiziert einen eingeloggten Nutzer und ist in 
   'x': x-Koordinate der Position,
   'y': y-Koordinate der Position,
   'isGuard': True für Gardeheere/ -flotten,
-  'isLoadedIn': True für Landheere auf Schiffen,
-  'movementPoints': Bewegungspunkte der Armee,
+  'isLoadedIn': True für Landheere
+				auf Schiffen,
+  'movementPoints': Bewegungspunkte 
+					der Armee,
   'heightPoints': Höhenpunkte der Armee
-}
+}]
 \end{lstlisting}
 Fußheere, Reiterheere und Flotten werden Serverseitig gleich gespeichert. Welches gemeint ist und somit, welche Bedeutung die einzelnen Felder haben, lässt sich aus dem 'armyId'-Feld ablesen. Die Fußheere haben Nummern 101-199, Reiterheere 201-299 und Flotten 301-399.\\
 Je nach dem, als welchen Nutzer der Authentifizierungs-Token einen identifiziert, bekommt man verschiedene Informationen. Ein Spielleitungs-Nutzer bekommt die richtigen Anzahlen von allen Armeen/Flotten. Ein eingeloggter Spieler bekommt richtige Zahlen für alle Armeen seines Reiches. Für fremde Armeen wird 'isGuard' auf False gesetzt. Die Felder 'count', 'leaders', 'mounts', 'lkp' und 'skp' werden auf -1 gesetzt, was sonst ein ungültiger Wert ist. Für sonstige Nutzer, auch nicht eingeloggte, werden alle Armeen auf diese Art maskiert.
@@ -83,7 +85,7 @@ Je nach dem, als welchen Nutzer der Authentifizierungs-Token einen identifiziert
 Rüstorte und andere Gebäude werden mit einer Anfrage an "/databaseLink/buildingdata/". Die Antwort kommt in folgender Form:
 \begin{lstlisting}
 [{
-  'realm': Kontrolierendes Reich (DB-Key),
+  'realm': Kontrolierendes Reich (Kürzel),
   'name': benutzerdefinierter Name,
   'type': 0 - 8,
   'x': x-Koordinate (außer Straße),
@@ -181,8 +183,8 @@ Man speichert die Armeen in dem man eine Anfrage an "/databaseLink/savearmydata/
     'lkp': leichte Katapulte/Kriegsschiffe,
     'skp': schwere Katapulte/Kriegsschiffe,
     'mounts': mitgeführte Reittiere,
-    'ownerPk': Kontrolierendes Reich 
-               (DB-Key),
+    'owner': Kontrolierendes Reich 
+               (Kürzel),
     'movementPoints': Bewegungspunkte 
                       der Armee,
     'heightPoints': Höhenpunkte 
