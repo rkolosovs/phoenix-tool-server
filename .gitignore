@@ -1,0 +1,10 @@
+*.pyc
+.gitignore~
+.idea/*
+.fuse_hidden000076700000003a
+.fuse_hidden*
+databaseLink/migrations/*
+README.txt~
+node_modules/*
+*.aux
+*.log
