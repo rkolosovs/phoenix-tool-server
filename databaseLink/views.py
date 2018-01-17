@@ -26,6 +26,8 @@ def armyData(request):
             d['lkp'] = -1
             d['skp'] = -1
             d['isGuard'] = False
+        for d in data:
+            d['realm'] = getRealmForId(d['realm'])
         returnData = json.dumps(data)
         return HttpResponse(returnData)
     else:
@@ -51,6 +53,8 @@ def armyData(request):
                     d['lkp'] = -1
                     d['skp'] = -1
                     d['isGuard'] = False
+        for d in data:
+            d['realm'] = getRealmForId(d['realm'])
         returnData = json.dumps(data)
         return HttpResponse(returnData)
 
@@ -64,6 +68,8 @@ def getLastSavedTimeStamp(request):
 def buildingData(request):
     all_buildings_data = serializers.serialize('python', Building.objects.all())
     data = [d['fields'] for d in all_buildings_data]
+    for d in data:
+        d['realm'] = getRealmForId(d['realm'])
     returnData = json.dumps(data)
     return HttpResponse(returnData)
 
@@ -160,7 +166,7 @@ def saveBuildingData(request):
                         else:
                             newBuilding = Building()
                         newBuilding.type = building[0]
-                        newBuilding.realm = Realm.objects.get(pk=building[1])
+                        newBuilding.realm = Realm.objects.get(tag=building[1])
                         newBuilding.x = building[2]
                         newBuilding.y = building[3]
                         newBuilding.save()
@@ -172,7 +178,7 @@ def saveBuildingData(request):
                         else:
                             newBuilding = Building()
                         newBuilding.type = building[0]
-                        newBuilding.realm = Realm.objects.get(pk=building[1])
+                        newBuilding.realm = Realm.objects.get(tag=building[1])
                         newBuilding.x = building[2]
                         newBuilding.y = building[3]
                         newBuilding.direction = building[4]
@@ -186,7 +192,7 @@ def saveBuildingData(request):
                         else:
                             newBuilding = Building()
                         newBuilding.type = building[0]
-                        newBuilding.realm = Realm.objects.get(pk=building[1])
+                        newBuilding.realm = Realm.objects.get(tag=building[1])
                         newBuilding.firstX = building[2]
                         newBuilding.firstY = building[3]
                         newBuilding.secondX = building[4]
@@ -226,7 +232,7 @@ def saveArmyData(request):
             # axyol = listItem.split(",")
             # Army axyol[0-5], X = axyol[6], Y = axyol[7], Owner = axyol[8], isLoaded in axyol[9]
             findArmyInDB = currentArmyData.filter(armyId=listItem['armyId']).filter(status="active")\
-                .filter(realm=Realm.objects.get(pk=listItem['ownerPk']))
+                .filter(realm=Realm.objects.get(tag=listItem['owner']).pk)
             if len(findArmyInDB) > 0:
                 army = findArmyInDB[0]
             else:
@@ -239,7 +245,7 @@ def saveArmyData(request):
             army.mounts = listItem['mounts']
             army.x = listItem['x']
             army.y = listItem['y']
-            army.realm = Realm.objects.get(pk=listItem['ownerPk'])
+            army.realm = Realm.objects.get(tag=listItem['owner'])
             army.movementPoints = listItem['movementPoints']
             army.heightPoints = listItem['heightPoints']
             if listItem['isLoadedIn'] == "null":
@@ -719,6 +725,7 @@ def postBattleEvent(request):
         else:
             return HttpResponse(status=403)  # Access denied. You can only send battle events involving your armies.
 
+
 def postMergeEvent(request):
     sessionKey = request.POST.get('authorization')
     user = Token.objects.get(key=sessionKey).user
@@ -760,6 +767,7 @@ def postTransferEvent(request):
             print("user is wrong realm:")
             return HttpResponse(status=403)  # Access denied. You can only move your own army.
 
+
 def postSplitEvent(request):
     sessionKey = request.POST.get('authorization')
     user = Token.objects.get(key=sessionKey).user
@@ -780,6 +788,7 @@ def postSplitEvent(request):
             print("user is wrong realm:")
             return HttpResponse(status=403)  # Access denied. You can only move your own army.
 
+
 def enterMergeEvent(event):
     realm = serializers.serialize('python', Realm.objects.filter(tag=event['realm']))
     if len(realm) == 0:
@@ -795,6 +804,7 @@ def enterMergeEvent(event):
     me.save()
     update_timestamp()
     return HttpResponse(status=200)
+
 
 def enterTransferEvent(event):
     realm = serializers.serialize('python', Realm.objects.filter(tag=event['realm']))
@@ -814,6 +824,7 @@ def enterTransferEvent(event):
     te.save()
     update_timestamp()
     return HttpResponse(status=200)
+
 
 def postMountEvent(request):
     sessionKey = request.POST.get('authorization')
@@ -835,6 +846,7 @@ def postMountEvent(request):
             print("user is wrong realm:")
             return HttpResponse(status=403)  # Access denied. You can only move your own army.
 
+
 def enterSplitEvent(event):
     realm = serializers.serialize('python', Realm.objects.filter(tag=event['realm']))
     if len(realm) == 0:
@@ -854,6 +866,7 @@ def enterSplitEvent(event):
     update_timestamp()
     return HttpResponse(status=200)
 
+
 def enterMoveEvent(event):
     realm = serializers.serialize('python', Realm.objects.filter(tag=event['realm']))
     if len(realm) == 0:
@@ -865,6 +878,7 @@ def enterMoveEvent(event):
     me.save()
     # update_timestamp()
     return HttpResponse(status=200)
+
 
 def enterShootEvent(event):
     realm = serializers.serialize('python', Realm.objects.filter(tag=event['realm']))
@@ -879,6 +893,7 @@ def enterShootEvent(event):
     # update_timestamp()
     return HttpResponse(status=200)
 
+
 def enterBattleEvent(event, armies):
     partips = list()
     for x in armies:
@@ -888,6 +903,7 @@ def enterBattleEvent(event, armies):
     be.participants = partips
     # update_timestamp()
     return HttpResponse(status=200)
+
 
 def enterMountEvent(event):
     realm = serializers.serialize('python', Realm.objects.filter(tag=event['realm']))
@@ -917,6 +933,7 @@ def enterMountEvent(event):
     print("newArmy saved")
     update_timestamp()
     return HttpResponse(status=200)
+
 
 def nextTurn():
     latestTurn = TurnEvent.objects.filter(date__isnull=False).latest('date')
@@ -955,7 +972,9 @@ def getRealms(request):
 
 
 def getRealmForId(d):
-    if d['realm'] is None:
+    if type(d) is int:
+        return Realm.objects.get(id=d).tag
+    elif d['realm'] is None:
         return None
     else:
         return Realm.objects.get(id=[d][0]['realm']).tag
