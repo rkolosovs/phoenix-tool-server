@@ -548,7 +548,7 @@ def getPendingEvents(request):
         json_events.append({
             'type': 'merge',
             'content': {
-                'realm': e['fields']['realm'],
+                'realm': getRealmForId(e['fields']['realm']),
                 'fromArmy': id1,
                 'toArmy': id2,
                 'x': e['fields']['x'],
@@ -570,7 +570,7 @@ def getPendingEvents(request):
         json_events.append({
             'type': 'transfer',
             'content': {
-                'realm': e['fields']['realm'],
+                'realm': getRealmForId(e['fields']['realm']),
                 'fromArmy': id1,
                 'toArmy': id2,
                 'armyFromType': e['fields']['armyFromType'],
@@ -594,7 +594,7 @@ def getPendingEvents(request):
         json_events.append({
             'type': 'split',
             'content': {
-                'realm': e['fields']['realm'],
+                'realm': getRealmForId(e['fields']['realm']),
                 'fromArmy': id1,
                 'newArmy': e['fields']['newArmy'],
                 'troops': e['fields']['troops'],
@@ -616,7 +616,7 @@ def getPendingEvents(request):
         json_events.append({
             'type': 'mount',
             'content': {
-                'realm': e['fields']['realm'],
+                'realm': getRealmForId(e['fields']['realm']),
                 'fromArmy': id1,
                 'newArmy': e['fields']['newArmy'],
                 'troops': e['fields']['troops'],
@@ -636,7 +636,7 @@ def getPendingEvents(request):
             'type': 'shoot',
             'content': {
                 'armyId': id1,
-                'realm': e['fields']['realm'],
+                'realm': getRealmForId(e['fields']['realm']),
                 'LKPcount': e['fields']['lkp_count'],
                 'SKPcount': e['fields']['skp_count'],
                 'toX': e['fields']['to_x'],
@@ -800,7 +800,7 @@ def enterMergeEvent(event):
     if len(toArmyId) == 0:
         return HttpResponse(status=400)  # Invalid input. Troop does not exist.
     me = MergeEvent(realm=Realm.objects.get(tag=event['realm']), fromArmy=fromArmyId[0], toArmy=toArmyId[0],
-                    x = event['x'], y = event['y'])
+                    x=event['x'], y=event['y'])
     me.save()
     update_timestamp()
     return HttpResponse(status=200)
@@ -820,7 +820,7 @@ def enterTransferEvent(event):
                        troops=event['troops'], leaders=event['leaders'], mounts=event['mounts'],
                        skp=event['skp'], lkp=event['lkp'], armyFromType=math.floor(event['fromArmyId']/100),
                        armyToType=math.floor(event['toArmyId'] / 100),
-                       x = event['x'], y = event['y'])
+                       x=event['x'], y=event['y'])
     te.save()
     update_timestamp()
     return HttpResponse(status=200)
@@ -887,7 +887,8 @@ def enterShootEvent(event):
     army = Troop.objects.filter(armyId=event['shooterID']).filter(realm=realm[0]['pk'])
     if len(army) == 0:
         return HttpResponse(status=400)  # Invalid input. Troop does not exist.
-    me = ShootEvent(shooter=army[0],realm=Realm.objects.get(tag=event['realm']), lkp_count=event['LKPcount'], skp_count=event['SKPcount'], to_x=event['toX'], to_y=event['toY'],
+    me = ShootEvent(shooter=army[0],realm=Realm.objects.get(tag=event['realm']), lkp_count=event['LKPcount'],
+                    skp_count=event['SKPcount'], to_x=event['toX'], to_y=event['toY'],
                     target=event['target'], from_x=event['fromX'], from_y=event['fromY'])
     me.save()
     # update_timestamp()
@@ -923,7 +924,7 @@ def enterMountEvent(event):
         mounts = event['troops']
         print("mounts = " + mounts)
     me = MountEvent(realm=Realm.objects.get(tag=event['realm']), fromArmy=fromArmyId[0], newArmy=event['newArmysId'],
-                    troops=event['troops'], leaders=event['leaders'], x = event['x'], y = event['y'])
+                    troops=event['troops'], leaders=event['leaders'], x=event['x'], y=event['y'])
     newArmy = Troop(realm=Realm.objects.get(tag=event['realm']), armyId=event['newArmysId'], count=event['troops'],
                     leaders=event['leaders'], mounts=mounts, skp=0, lkp=0, x=event['x'], y=event['y'],
                     movementPoints=fromArmyId[0].movementPoints, heightPoints=fromArmyId[0].heightPoints, status='tobe')
