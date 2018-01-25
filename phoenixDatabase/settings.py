@@ -138,5 +138,5 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 # Template to go after Login
-LOGIN_REDIRECT_URL = 'http://127.0.0.1:8080/phoenixclient.html'
-#'http://h2610265.stratoserver.net'
+LOGIN_REDIRECT_URL = 'http://h2610265.stratoserver.net'
+# 'http://127.0.0.1:8080/phoenixclient.html'
