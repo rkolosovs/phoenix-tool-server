@@ -121,7 +121,7 @@ def saveRiverData(request):
         currentRiverData = River.objects.all()
         riverData = request.POST.get("river")
         listOfData = riverData.split(";")
-        riversToSave = [];
+        riversToSave = []
         for listItem in listOfData:
             xyxy = listItem.split(",")
             currentRiverData.filter(firstX=xyxy[0]).filter(firstY=xyxy[1]).filter(secondX=xyxy[2]).\
@@ -135,7 +135,7 @@ def saveRiverData(request):
             river.save()
             riversToSave.append(river.pk)
         currentRiverData = River.objects.all()
-        currentRiverData.exclude(pk__in = riversToSave).delete()
+        currentRiverData.exclude(pk__in=riversToSave).delete()
         update_timestamp()
         return HttpResponse(status=200)  # Success.
 
@@ -856,7 +856,7 @@ def enterSplitEvent(event):
         return HttpResponse(status=400)  # Invalid input. Troop does not exist.
     se = SplitEvent(realm=Realm.objects.get(tag=event['realm']), fromArmy=fromArmyId[0], newArmy=event['newArmysId'],
                     troops=event['troops'], leaders=event['leaders'], mounts=event['mounts'],
-                    skp=event['skp'], lkp=event['lkp'], x = event['x'], y = event['y'])
+                    skp=event['skp'], lkp=event['lkp'], x=event['x'], y=event['y'])
     newArmy = Troop(realm=Realm.objects.get(tag=event['realm']), armyId=event['newArmysId'], count=event['troops'],
                     leaders=event['leaders'], mounts=event['mounts'], skp=event['skp'], lkp=event['lkp'],
                     x=event['x'], y=event['y'], movementPoints=fromArmyId[0].movementPoints,
@@ -887,7 +887,7 @@ def enterShootEvent(event):
     army = Troop.objects.filter(armyId=event['shooterID']).filter(realm=realm[0]['pk'])
     if len(army) == 0:
         return HttpResponse(status=400)  # Invalid input. Troop does not exist.
-    me = ShootEvent(shooter=army[0],realm=Realm.objects.get(tag=event['realm']), lkp_count=event['LKPcount'],
+    me = ShootEvent(shooter=army[0], realm=Realm.objects.get(tag=event['realm']), lkp_count=event['LKPcount'],
                     skp_count=event['SKPcount'], to_x=event['toX'], to_y=event['toY'],
                     target=event['target'], from_x=event['fromX'], from_y=event['fromY'])
     me.save()
