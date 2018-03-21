@@ -152,69 +152,49 @@ def saveBuildingData(request):
         return HttpResponse(status=403)  # Access denied. You have to be SL to do this.
     else:
         currentBuildingData = Building.objects.all()
-        buildingData = request.POST.get("buildings")
-        listOfData = buildingData.split(";")
-        for listItem in listOfData:
-            building = listItem.split(",")
-            for listItem in listOfData:
-                building = listItem.split(",")
-                buildingLength = len(building)
-                if building[buildingLength - 1] == "true":
-                    if int(building[0]) <= 4:
-                        newBuilding = currentBuildingData.exclude(type=5).exclude(type=6).exclude(type=7).exclude(
-                            type=8) \
-                            .filter(realm=building[1]).filter(x=building[2]).filter(y=building[3])
-                        if len(newBuilding) == 1:
-                            newBuilding = newBuilding[0]
-                        else:
-                            newBuilding = Building()
-                        newBuilding.type = building[0]
-                        newBuilding.realm = Realm.objects.get(tag=building[1])
-                        newBuilding.x = building[2]
-                        newBuilding.y = building[3]
-                        newBuilding.save()
-                    elif int(building[0]) <= 7:
-                        newBuilding = currentBuildingData.filter(type=building[0]).filter(realm=building[1]) \
-                            .filter(x=building[2]).filter(y=building[3]).filter(direction=building[4])
-                        if len(newBuilding) == 1:
-                            newBuilding = newBuilding[0]
-                        else:
-                            newBuilding = Building()
-                        newBuilding.type = building[0]
-                        newBuilding.realm = Realm.objects.get(tag=building[1])
-                        newBuilding.x = building[2]
-                        newBuilding.y = building[3]
-                        newBuilding.direction = building[4]
-                        newBuilding.save()
-                    elif int(building[0]) == 8:
-                        newBuilding = currentBuildingData.filter(type=8).filter(realm=building[1]).filter(
-                            firstX=building[2]) \
-                            .filter(firstY=building[3]).filter(secondX=building[4]).filter(secondY=building[5])
-                        if len(newBuilding) == 1:
-                            newBuilding = newBuilding[0]
-                        else:
-                            newBuilding = Building()
-                        newBuilding.type = building[0]
-                        newBuilding.realm = Realm.objects.get(tag=building[1])
-                        newBuilding.firstX = building[2]
-                        newBuilding.firstY = building[3]
-                        newBuilding.secondX = building[4]
-                        newBuilding.secondY = building[5]
-                        newBuilding.save()
-                elif building[buildingLength - 1] == "false":
-                    if int(building[0]) <= 4:
-                        currentBuildingData.exclude(type=5).exclude(type=6).exclude(type=7).exclude(type=8) \
-                            .filter(realm=building[1]).filter(x=building[2]).filter(y=building[3]).delete()
-                        print("deleted")
-                    elif int(building[0]) <= 7:
-                        currentBuildingData.exclude(type=0).exclude(type=1).exclude(type=2).exclude(type=3) \
-                            .exclude(type=4).exclude(type=8).filter(realm=building[1]).filter(x=building[2]) \
-                            .filter(y=building[3]).filter(direction=building[4]).delete()
-                        print("deleted")
-                    elif int(building[0]) == 8:
-                        currentBuildingData.filter(type=8).filter(realm=building[1]).filter(firstX=building[2]) \
-                            .filter(firstY=building[3]).filter(secondX=building[4]).filter(secondY=building[5]).delete()
-                        print("deleted")
+        # buildingData = request.POST.get("buildings")
+        buildingData = json.loads(request.POST['buildings'])
+        for listItem in buildingData:
+            foundBuildings = currentBuildingData.filter(firstX=listItem['firstX']).filter(firstY=listItem['firstY'])
+            if listItem['type'] <= 4:
+                foundBuildings = foundBuildings.filter(type<=4)
+            else:
+                foundBuildings = foundBuildings.filter(type=listItem['type'])
+            if listItem['type'] == 5:
+                foundBuildings = foundBuildings.filter(direction=listItem['direction'])
+            elif listItem['type'] >= 6:
+                foundBuildings = foundBuildings.filter(secondX=listItem['secondX']).filter(secondY=listItem['secondY'])
+
+            if listItem['added/changed'] & foundBuildings.length > 0:
+                # change existing building
+                foundBuildings[0].realm = Realm.objects.get(tag=listItem['realm'])
+                foundBuildings[0].type = listItem['type']
+                foundBuildings[0].name = listItem['name']
+                if listItem['type'] <= 5:
+                    foundBuildings[0].buildPoints = listItem['buildPoints']
+                    if listItem['type'] == 5:
+                        foundBuildings[0].guardCount = listItem['guardCount']
+                foundBuildings[0].save()
+            elif listItem['added/changed'] & foundBuildings.length == 0:
+                # add new building
+                newBuilding = Building()
+                newBuilding.realm = Realm.objects.get(tag=listItem['realm'])
+                newBuilding.name = listItem['name']
+                newBuilding.type = listItem['type']
+                newBuilding.firstX = listItem['firstX']
+                newBuilding.firstY = listItem['firstY']
+                if listItem['type'] <= 5:
+                    newBuilding.buildPoints = listItem['buildPoints']
+                    if listItem['type'] == 5:
+                        newBuilding.direction = listItem['direction']
+                        newBuilding.guardCount = listItem['guardCount']
+                elif listItem['type'] >= 6:
+                    newBuilding.secondX = listItem['secondX']
+                    newBuilding.secondY = listItem['secondY']
+                newBuilding.save()
+            else:
+                # delete existing building
+                foundBuildings.delete()
         update_timestamp()
         return HttpResponse(status=200)  # Success.
 

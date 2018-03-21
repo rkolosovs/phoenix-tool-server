@@ -61,7 +61,7 @@ class Building(models.Model):
     )
     type_names = ["castle", "city", "fortress", "capital", "capitalFort", "wall", "harbor", "bridge", "street"]
     realm = models.ForeignKey(Realm, on_delete=models.CASCADE, null=True)
-    name = models.CharField(max_length=250, null=True, blank=True)
+    name = models.CharField(max_length=250, default="")
     type = models.IntegerField()
     direction = models.CharField(max_length=2, null=True, blank=True, choices=DIRECTIONS)
     firstX = models.IntegerField(null=True, blank=True)
@@ -72,7 +72,7 @@ class Building(models.Model):
     buildPoints = models.IntegerField(null=True, blank=True)
 
     def __str__(self):
-        result = Realm.short(self.realm) + ' ' + str(self.name) + ' ' + str(self.type_names[self.type])
+        result = Realm.short(self.realm) + ' ' + str(self.type_names[self.type]) + ' ' + str(self.name)
         if 0 <= self.type <= 5:
             result += ' (' + str(self.firstX) + ', ' + str(self.firstY) + ') ' + str(self.buildPoints) + ' BP'
         if 5 == self.type:
