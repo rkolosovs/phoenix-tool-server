@@ -4,7 +4,7 @@ import json
 import time
 from .models import Field, River, Building, Troop, Realm, RealmTerritory, RealmMembership, MoveEvent, BattleEvent, \
     BuildEvent, RecruitmentEvent, TurnEvent, CommentEvent, TurnOrder, LastSavedTimeStamp, SplitEvent, MergeEvent, \
-    TransferEvent, MountEvent, ShootEvent
+    TransferEvent, MountEvent, ShootEvent, Event
 import django.middleware.csrf
 import math
 from django.shortcuts import render, redirect

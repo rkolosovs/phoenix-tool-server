@@ -145,7 +145,7 @@ class Troop(models.Model):
     movementPoints = models.IntegerField()
     heightPoints = models.IntegerField()
     isGuard = models.BooleanField(default=False)
-    isLoadedIn = models.IntegerField(default=None, blank=True , null=True)
+    isLoadedIn = models.IntegerField(default=None, blank=True, null=True)
     STATUS_CHOICES = (("tobe", "tobe"), ("active", "active"), ("inactive", "inactive"))
     status = models.CharField(
         max_length=8,
@@ -154,7 +154,7 @@ class Troop(models.Model):
     )
 
     def short(self):
-        return str(self.armyId)
+        return Realm.short(self.realm) + ' ' + str(self.armyId)
 
     def __str__(self):
         is_guard = ''
@@ -183,15 +183,23 @@ class TurnOrder(models.Model):
             return str(self.turnNumber) + ', ' + str(self.turnOrder) + ', ' + Realm.short(self.realm)
 
 
-class MoveEvent(models.Model):
+class Event(models.Model):
+    prerequisiteEvents = models.ManyToManyField(Event)
+    turn = models.ForeignKey(TurnOrder, on_delete=models.CASCADE)
+    processed = models.BooleanField(default=False)
+    date = models.DateTimeField(auto_now_add=True, null=True)
+
+    class Meta:
+        abstract = True
+
+
+class MoveEvent(Event):
     # Used to record movement of armies
     troop = models.ForeignKey(Troop, null=True, on_delete=models.SET_NULL)
     from_x = models.IntegerField()
     from_y = models.IntegerField()
     to_x = models.IntegerField()
     to_y = models.IntegerField()
-    processed = models.BooleanField(default=False)
-    date = models.DateTimeField(auto_now_add=True, null=True)
 
     def __str__(self):
         if self.processed is True:
@@ -206,13 +214,11 @@ class MoveEvent(models.Model):
             'to (' + str(self.to_x) + ', ' + str(self.to_y) + '), ' + processed_str + ', ' + str(self.date)
 
 
-class BattleEvent(models.Model):
+class BattleEvent(Event):
     # Used to record battles and their outcome
     participants = models.ManyToManyField(Troop)
     x = models.IntegerField()
     y = models.IntegerField()
-    processed = models.BooleanField(default=False)
-    date = models.DateTimeField(auto_now_add=True, null=True)
 
     def __str__(self):
         if self.processed is True:
@@ -227,14 +233,12 @@ class BattleEvent(models.Model):
             str(self.date)
 
 
-class BuildEvent(models.Model):
+class BuildEvent(Event):
     # Used to record builds commissioned
-    #TODO: different building types need different fields
+    # TODO: different building types need different fields
     x = models.IntegerField()
     y = models.IntegerField()
     type = models.IntegerField()
-    processed = models.BooleanField(default=False)
-    date = models.DateTimeField(auto_now_add=True, null=True)
 
     def __str__(self):
         if self.processed is True:
@@ -244,7 +248,8 @@ class BuildEvent(models.Model):
         return '(' + str(self.x) + ', ' + str(self.y) + '), ' + str(self.type) + ', ' + processed_str + \
                ', ' + str(self.date)
 
-class ShootEvent(models.Model):
+
+class ShootEvent(Event):
     # Used to record all the shooting
     shooter = models.ForeignKey(Troop, on_delete=models.CASCADE, null=True)
     realm = models.ForeignKey(Realm, on_delete=models.CASCADE)
@@ -255,8 +260,6 @@ class ShootEvent(models.Model):
     target = models.CharField(max_length=10, null=True, blank=True)
     lkp_count = models.IntegerField()
     skp_count = models.IntegerField()
-    processed = models.BooleanField(default=False)
-    date = models.DateTimeField(auto_now_add=True, null=True)
 
     def __str__(self):
         if self.processed is True:
@@ -273,7 +276,7 @@ class ShootEvent(models.Model):
                + ', ' + processed_str + ', ' + str(self.date)
 
 
-class RecruitmentEvent(models.Model):
+class RecruitmentEvent(Event):
     # Used to record recruitment started
     building = models.ForeignKey(Building, on_delete=models.CASCADE)
     army = models.ForeignKey(Troop, on_delete=models.CASCADE, null=True)
@@ -287,8 +290,6 @@ class RecruitmentEvent(models.Model):
     ships = models.IntegerField()
     lks = models.IntegerField()
     sks = models.IntegerField()
-    processed = models.BooleanField(default=False)
-    date = models.DateTimeField(auto_now_add=True, null=True)
 
     def __str__(self):
         if self.processed is True:
@@ -316,12 +317,10 @@ class RecruitmentEvent(models.Model):
         return output
 
 
-class TreasuryEvent(models.Model):
+class TreasuryEvent(Event):
     # Used to record changes in treasury
     realm = models.ForeignKey(Realm, on_delete=models.CASCADE)
     change = models.IntegerField()
-    processed = models.BooleanField(default=False)
-    date = models.DateTimeField(auto_now_add=True, null=True)
 
     def __str__(self):
         if self.processed is True:
@@ -335,13 +334,12 @@ class TreasuryEvent(models.Model):
         return Realm.short(self.realm) + direction + str(abs(self.change.to_python())) + ', ' + processed_str + \
             ', ' + str(self.date)
 
-class MergeEvent(models.Model):
+
+class MergeEvent(Event):
     # Used to record the Merging of armies
     realm = models.ForeignKey(Realm, on_delete=models.CASCADE)
     fromArmy = models.ForeignKey(Troop, null=True, on_delete=models.SET_NULL, related_name='+')
     toArmy = models.ForeignKey(Troop, null=True, on_delete=models.SET_NULL, related_name='+')
-    processed = models.BooleanField(default=False)
-    date = models.DateTimeField(auto_now_add=True, null=True)
     x = models.IntegerField(null=True)
     y = models.IntegerField(null=True)
 
@@ -360,9 +358,10 @@ class MergeEvent(models.Model):
             troop_str_to = Realm.short(self.toArmy.realm) + ', ' + str(self.toArmy.armyId)
 
         return troop_str_from + ', merges into ' + troop_str_to + ' on Field (' + str(self.x) +\
-               ',' + str(self.y) + ').' + processed_str + ', ' + str(self.date)
+            ',' + str(self.y) + ').' + processed_str + ', ' + str(self.date)
 
-class TransferEvent(models.Model):
+
+class TransferEvent(Event):
     # Used to record the transfer of troops from one army to another
     realm = models.ForeignKey(Realm, on_delete=models.CASCADE)
     fromArmy = models.ForeignKey(Troop, null=True, on_delete=models.SET_NULL, related_name='+')
@@ -374,11 +373,8 @@ class TransferEvent(models.Model):
     mounts = models.IntegerField()
     lkp = models.IntegerField()
     skp = models.IntegerField()
-    processed = models.BooleanField(default=False)
-    date = models.DateTimeField(auto_now_add=True, null=True)
     x = models.IntegerField(null=True)
     y = models.IntegerField(null=True)
-
 
     def __str__(self):
         if self.processed is True:
@@ -393,7 +389,7 @@ class TransferEvent(models.Model):
             troop_str_to = '*no army*'
         else:
             troop_str_to = Realm.short(self.toArmy.realm) + ', ' + str(self.toArmy.armyId)
-        result  =troop_str_from + ', transfers '
+        result = troop_str_from + ', transfers '
         if self.troops > 0:
             result += str(self.troops) + ' troops, '
         if self.leaders > 0:
@@ -407,7 +403,8 @@ class TransferEvent(models.Model):
         result += 'to ' + troop_str_to  + ' on Field (' + str(self.x) + ',' + str(self.y) + '). ' + processed_str + ', ' + str(self.date)
         return result
 
-class SplitEvent(models.Model):
+
+class SplitEvent(Event):
     # Used to record the splitting of an army
     realm = models.ForeignKey(Realm, on_delete=models.CASCADE)
     fromArmy = models.ForeignKey(Troop, null=True, on_delete=models.SET_NULL)
@@ -417,8 +414,6 @@ class SplitEvent(models.Model):
     mounts = models.IntegerField()
     lkp = models.IntegerField()
     skp = models.IntegerField()
-    processed = models.BooleanField(default=False)
-    date = models.DateTimeField(auto_now_add=True, null=True)
     x = models.IntegerField(null=True)
     y = models.IntegerField(null=True)
 
@@ -442,15 +437,14 @@ class SplitEvent(models.Model):
         result += ' on Field (' + str(self.x) + ',' + str(self.y) + '). ' + processed_str + ', ' + str(self.date)
         return result
 
-class MountEvent(models.Model):
-    #used to record mounting or unmounting of troops
+
+class MountEvent(Event):
+    # used to record both mounting and dismounting of troops
     realm = models.ForeignKey(Realm, on_delete=models.CASCADE)
     fromArmy = models.ForeignKey(Troop, null=True, on_delete=models.SET_NULL)
     newArmy = models.IntegerField()
     troops = models.IntegerField()
     leaders = models.IntegerField()
-    processed = models.BooleanField(default=False)
-    date = models.DateTimeField(auto_now_add=True, null=True)
     x = models.IntegerField(null=True)
     y = models.IntegerField(null=True)
 
@@ -468,6 +462,7 @@ class MountEvent(models.Model):
         result += ' on Field (' + str(self.x) + ',' + str(self.y) + '). ' + processed_str + ', ' + str(self.date)
         return result
 
+
 class TurnEvent(models.Model):
     # Used to record turn change
     STATUS = (
@@ -482,10 +477,9 @@ class TurnEvent(models.Model):
         return str(self.turn) + ', ' + str(self.get_status_display()) + ', ' + str(self.date)
 
 
-class CommentEvent(models.Model):
+class CommentEvent(Event):
     # Used to record any other non-mechanical events
     text = models.CharField(max_length=2000, blank=True)
-    date = models.DateTimeField(auto_now_add=True, null=True)
 
     def __str__(self):
         return str(self.text) + ', ' + str(self.date)
