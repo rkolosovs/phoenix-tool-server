@@ -184,7 +184,7 @@ class TurnOrder(models.Model):
 
 
 class Event(models.Model):
-    prerequisiteEvents = models.ManyToManyField(Event)
+    prerequisiteEvents = models.ManyToManyField('self', null=True)
     turn = models.ForeignKey(TurnOrder, on_delete=models.CASCADE)
     processed = models.BooleanField(default=False)
     date = models.DateTimeField(auto_now_add=True, null=True)
