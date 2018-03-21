@@ -63,21 +63,21 @@ class Building(models.Model):
     realm = models.ForeignKey(Realm, on_delete=models.CASCADE, null=True)
     name = models.CharField(max_length=250, null=True, blank=True)
     type = models.IntegerField()
-    x = models.IntegerField(null=True, blank=True)
-    y = models.IntegerField(null=True, blank=True)
     direction = models.CharField(max_length=2, null=True, blank=True, choices=DIRECTIONS)
     firstX = models.IntegerField(null=True, blank=True)
     firstY = models.IntegerField(null=True, blank=True)
     secondX = models.IntegerField(null=True, blank=True)
     secondY = models.IntegerField(null=True, blank=True)
+    guardCount = models.IntegerField(null=True, blank=True)
+    buildPoints = models.IntegerField(null=True, blank=True)
 
     def __str__(self):
         result = Realm.short(self.realm) + ' ' + str(self.name) + ' ' + str(self.type_names[self.type])
-        if 0 <= self.type <= 7:
-            result += ' (' + str(self.x) + ', ' + str(self.y) + ')'
-        if 5 <= self.type <= 7:
-            result += ' ' + str(self.direction)
-        if self.type == 8:
+        if 0 <= self.type <= 5:
+            result += ' (' + str(self.firstX) + ', ' + str(self.firstY) + ') ' + str(self.buildPoints) + ' BP'
+        if 5 == self.type:
+            result += ' facing ' + str(self.direction) + ', ' + str(self.guardCount) + ' guards'
+        if 6 <= self.type <= 8:
             result += ' between (' + str(self.firstX) + ', ' + str(self.firstY) + ') and (' + str(self.secondX) + \
                ', ' + str(self.secondY) + ')'
         return result
