@@ -400,7 +400,8 @@ class TransferEvent(Event):
             result += str(self.lkp) + ' lkp, '
         if self.skp > 0:
             result += str(self.skp) + ' skp '
-        result += 'to ' + troop_str_to  + ' on Field (' + str(self.x) + ',' + str(self.y) + '). ' + processed_str + ', ' + str(self.date)
+        result += 'to ' + troop_str_to + ' on Field (' + str(self.x) + ',' + str(self.y) + '). ' + processed_str + \
+                  ', ' + str(self.date)
         return result
 
 
