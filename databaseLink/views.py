@@ -303,7 +303,7 @@ def getRiverData(request):
     return HttpResponse(json.dumps(data))
 
 
-def getCSRFToken(request): ## TODO: funktioniert noch nicht
+def getCSRFToken(request):  # TODO: funktioniert noch nicht
     tokenToReturn = json.dumps(django.middleware.csrf.get_token(request))
     return HttpResponse(tokenToReturn)
 
@@ -718,15 +718,12 @@ def postMergeEvent(request):
         return HttpResponse(status=401)  # Authorisation failure. Please log in.
     elif user.is_staff:
         # enter into db
-        print("user is staff:")
         return enterMergeEvent(event)
     else:
         # check if user is of correct realm, then enter into db
         if getRealmForId(realmMembership[0]['fields']) == event['realm']:
-            print("user is fitting realm:")
             return enterMergeEvent(event)
         else:
-            print("user is wrong realm:")
             return HttpResponse(status=403)  # Access denied. You can only move your own army.
 
 
@@ -739,15 +736,12 @@ def postTransferEvent(request):
         return HttpResponse(status=401)  # Authorisation failure. Please log in.
     elif user.is_staff:
         # enter into db
-        print("user is staff:")
         return enterTransferEvent(event)
     else:
         # check if user is of correct realm, then enter into db
         if getRealmForId(realmMembership[0]['fields']) == event['realm']:
-            print("user is fitting realm:")
             return enterTransferEvent(event)
         else:
-            print("user is wrong realm:")
             return HttpResponse(status=403)  # Access denied. You can only move your own army.
 
 
@@ -760,15 +754,12 @@ def postSplitEvent(request):
         return HttpResponse(status=401)  # Authorisation failure. Please log in.
     elif user.is_staff:
         # enter into db
-        print("user is staff:")
         return enterSplitEvent(event)
     else:
         # check if user is of correct realm, then enter into db
         if getRealmForId(realmMembership[0]['fields']) == event['realm']:
-            print("user is fitting realm:")
             return enterSplitEvent(event)
         else:
-            print("user is wrong realm:")
             return HttpResponse(status=403)  # Access denied. You can only move your own army.
 
 
@@ -818,15 +809,12 @@ def postMountEvent(request):
         return HttpResponse(status=401)  # Authorisation failure. Please log in.
     elif user.is_staff:
         # enter into db
-        print("user is staff:")
         return enterMountEvent(event)
     else:
         # check if user is of correct realm, then enter into db
         if getRealmForId(realmMembership[0]['fields']) == event['realm']:
-            print("user is fitting realm:")
             return enterMountEvent(event)
         else:
-            print("user is wrong realm:")
             return HttpResponse(status=403)  # Access denied. You can only move your own army.
 
 
@@ -891,30 +879,21 @@ def enterBattleEvent(event, armies):
 
 def enterMountEvent(event):
     realm = serializers.serialize('python', Realm.objects.filter(tag=event['realm']))
-    print("before realm")
     if len(realm) == 0:
         return HttpResponse(status=400)  # Invalid input. Realm given does not exist.
-    print("realm exists")
-    print("before from army")
-    print("fromArmyId = " + str(event['fromArmyId']) + ", realm = " + str(realm[0]['pk']))
     fromArmyId = Troop.objects.filter(armyId=event['fromArmyId']).filter(realm=realm[0]['pk'])
-    print(fromArmyId)
     if len(fromArmyId) == 0:
         return HttpResponse(status=400)  # Invalid input. Troop does not exist.
-    print("from army exists")
     mounts = 0
     if (fromArmyId[0].armyId >= 200) and (fromArmyId[0].armyId < 300):
         mounts = event['troops']
-        print("mounts = " + mounts)
     me = MountEvent(realm=Realm.objects.get(tag=event['realm']), fromArmy=fromArmyId[0], newArmy=event['newArmysId'],
                     troops=event['troops'], leaders=event['leaders'], x=event['x'], y=event['y'])
     newArmy = Troop(realm=Realm.objects.get(tag=event['realm']), armyId=event['newArmysId'], count=event['troops'],
                     leaders=event['leaders'], mounts=mounts, skp=0, lkp=0, x=event['x'], y=event['y'],
                     movementPoints=fromArmyId[0].movementPoints, heightPoints=fromArmyId[0].heightPoints, status='tobe')
-    print(newArmy)
     me.save()
     newArmy.save()
-    print("newArmy saved")
     update_timestamp()
     return HttpResponse(status=200)
 
