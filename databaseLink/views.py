@@ -90,16 +90,19 @@ def saveFieldData(request):
         return HttpResponse(status=403)  # Access denied. You have to be SL to do this.
     else:
         currentMapData = Field.objects.all()
-        mapdata = request.POST.get("map")
-        listOfData = mapdata.split(";")
-        for listItem in listOfData:
-            typeXY = listItem.split(",")
-            currentMapData.filter(x=typeXY[1]).filter(y=typeXY[2]).delete()
-            field = Field()
-            field.type = typeXY[0]
-            field.x = typeXY[1]
-            field.y = typeXY[2]
-            field.save()
+        # mapdata = request.POST.get("map")
+        mapData = json.loads(request.POST['map'])
+        for dataPoint in mapData:
+            currentField = currentMapData.filter(x=dataPoint['x']).filter(y=dataPoint['y'])
+            if currentField.length > 0:
+                currentField[0].type = dataPoint['type']
+                currentField[0].save()
+            else:
+                newField = Field()
+                newField.type = dataPoint['type']
+                newField.x = dataPoint['x']
+                newField.y = dataPoint['y']
+                newField.save()
         update_timestamp()
         return HttpResponse(status=200)  # Success.
 
