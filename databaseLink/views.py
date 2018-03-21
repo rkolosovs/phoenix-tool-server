@@ -122,22 +122,22 @@ def saveRiverData(request):
         return HttpResponse(status=403)  # Access denied. You have to be SL to do this.
     else:
         currentRiverData = River.objects.all()
-        riverData = request.POST.get("river")
-        listOfData = riverData.split(";")
+        # riverData = request.POST.get("river")
+        riverData = json.loads(request.POST['river'])
         riversToSave = []
-        for listItem in listOfData:
-            xyxy = listItem.split(",")
-            currentRiverData.filter(firstX=xyxy[0]).filter(firstY=xyxy[1]).filter(secondX=xyxy[2]).\
-                filter(secondY=xyxy[3]).delete()
-            print("deleted")
-            river = River()
-            river.firstX = xyxy[0]
-            river.firstY = xyxy[1]
-            river.secondX = xyxy[2]
-            river.secondY = xyxy[3]
-            river.save()
-            riversToSave.append(river.pk)
-        currentRiverData = River.objects.all()
+        for listItem in riverData:
+            foundRiver = currentRiverData.filter(firstX=listItem['firstX']).filter(firstY=listItem['firstY']).\
+                filter(secondX=listItem['secondX']).filter(secondY=listItem['secondY'])
+            if foundRiver.length > 0:
+                riversToSave.append(foundRiver[0].pk)
+            else:
+                newRiver = River()
+                newRiver.firstX = listItem['firstX']
+                newRiver.secondX = listItem['secondX']
+                newRiver.firstY = listItem['firstY']
+                newRiver.secondY = listItem['secondY']
+                newRiver.save()
+                riversToSave.append(newRiver.pk)
         currentRiverData.exclude(pk__in=riversToSave).delete()
         update_timestamp()
         return HttpResponse(status=200)  # Success.
