@@ -495,6 +495,7 @@ def getPendingEvents(request):
         else:
             id = '*none*'
             realm = '*none*'
+        turn = TurnOrder.objects.get(pk=e['turn'])
         json_events.append({
             'type': 'move',
             'content': {
@@ -505,9 +506,12 @@ def getPendingEvents(request):
                 'toX': e['fields']['to_x'],
                 'toY': e['fields']['to_y']
             },
+            'prerequisiteEvents': e['prerequisiteEvents'],
+            'turn': {'turnNumber': turn.turnNumber, 'turnOrder': turn.turnOrder, 'realm': getRealmForId(turn.realm)},
             'pk': e['pk']
         })
     for e in pending_battle_events:
+        turn = TurnOrder.objects.get(pk=e['turn'])
         json_events.append({
                 'type': 'battle',
                 'content': {
@@ -515,6 +519,8 @@ def getPendingEvents(request):
                     'x': e['fields']['x'],
                     'y': e['fields']['y']
                 },
+                'prerequisiteEvents': e['prerequisiteEvents'],
+                'turn': {'turnNumber': turn.turnNumber, 'turnOrder': turn.turnOrder, 'realm': getRealmForId(turn.realm)},
                 'pk': e['pk']
             })
     for e in pending_merge_events:
@@ -528,6 +534,7 @@ def getPendingEvents(request):
             id2 = toArmy[0]['fields']['armyId']
         else:
             id2 = '*none*'
+        turn = TurnOrder.objects.get(pk=e['turn'])
         json_events.append({
             'type': 'merge',
             'content': {
@@ -537,6 +544,8 @@ def getPendingEvents(request):
                 'x': e['fields']['x'],
                 'y': e['fields']['y']
             },
+            'prerequisiteEvents': e['prerequisiteEvents'],
+            'turn': {'turnNumber': turn.turnNumber, 'turnOrder': turn.turnOrder, 'realm': getRealmForId(turn.realm)},
             'pk': e['pk']
         })
     for e in pending_tansfer_events:
@@ -550,6 +559,7 @@ def getPendingEvents(request):
             id2 = toArmy[0]['fields']['armyId']
         else:
             id2 = '*none*'
+        turn = TurnOrder.objects.get(pk=e['turn'])
         json_events.append({
             'type': 'transfer',
             'content': {
@@ -566,6 +576,8 @@ def getPendingEvents(request):
                 'x': e['fields']['x'],
                 'y': e['fields']['y']
             },
+            'prerequisiteEvents': e['prerequisiteEvents'],
+            'turn': {'turnNumber': turn.turnNumber, 'turnOrder': turn.turnOrder, 'realm': getRealmForId(turn.realm)},
             'pk': e['pk']
         })
     for e in pending_split_events:
@@ -574,6 +586,7 @@ def getPendingEvents(request):
             id1 = fromArmy[0]['fields']['armyId']
         else:
             id1 = '*none*'
+        turn = TurnOrder.objects.get(pk=e['turn'])
         json_events.append({
             'type': 'split',
             'content': {
@@ -588,6 +601,8 @@ def getPendingEvents(request):
                 'x': e['fields']['x'],
                 'y': e['fields']['y']
             },
+            'prerequisiteEvents': e['prerequisiteEvents'],
+            'turn': {'turnNumber': turn.turnNumber, 'turnOrder': turn.turnOrder, 'realm': getRealmForId(turn.realm)},
             'pk': e['pk']
         })
     for e in pending_mount_events:
@@ -596,6 +611,7 @@ def getPendingEvents(request):
             id1 = fromArmy[0]['fields']['armyId']
         else:
             id1 = '*none*'
+        turn = TurnOrder.objects.get(pk=e['turn'])
         json_events.append({
             'type': 'mount',
             'content': {
@@ -607,6 +623,8 @@ def getPendingEvents(request):
                 'x': e['fields']['x'],
                 'y': e['fields']['y']
             },
+            'prerequisiteEvents': e['prerequisiteEvents'],
+            'turn': {'turnNumber': turn.turnNumber, 'turnOrder': turn.turnOrder, 'realm': getRealmForId(turn.realm)},
             'pk': e['pk']
         })
     for e in pending_shoot_events:
@@ -615,6 +633,7 @@ def getPendingEvents(request):
             id1 = shootArmy[0]['fields']['armyId']
         else:
             id1 = '*none*'
+        turn = TurnOrder.objects.get(pk=e['turn'])
         json_events.append({
             'type': 'shoot',
             'content': {
@@ -628,6 +647,8 @@ def getPendingEvents(request):
                 'fromX': e['fields']['from_x'],
                 'fromY': e['fields']['from_y']
             },
+            'prerequisiteEvents': e['prerequisiteEvents'],
+            'turn': {'turnNumber': turn.turnNumber, 'turnOrder': turn.turnOrder, 'realm': getRealmForId(turn.realm)},
             'pk': e['pk']
         })
     return HttpResponse(json.dumps(json_events))
