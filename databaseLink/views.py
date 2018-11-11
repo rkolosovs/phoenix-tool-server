@@ -14,6 +14,9 @@ from .forms import UserForm
 from rest_framework.authtoken.models import Token
 # Views for saving data from the Phoenix launcher, and views for dispensing it.
 
+def healthcheck(request):
+    return HttpResponse(status=200)
+
 def armyData(request):
     sessionKey = request.POST.get('authorization')
     if (sessionKey == '0') | (sessionKey is None):
