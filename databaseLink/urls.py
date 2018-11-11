@@ -33,4 +33,5 @@ urlpatterns = [
     url(r'^login/$', views.loginView, name='login'),
     url(r'^logout/$', auth_views.logout, name='logout'),
     url(r'^admin/', admin.site.urls),
+    url(r'^healthcheck/', views.healthcheck, name='healthcheck')
 ]
