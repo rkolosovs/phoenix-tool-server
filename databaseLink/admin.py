@@ -1,6 +1,7 @@
 from django.contrib import admin
 from .models import Realm, RealmMembership, Character, Building, Field, RealmTerritory, River, TurnOrder, Troop, \
-    TurnEvent, BuildEvent, ShootEvent, MoveEvent, RecruitmentEvent, BattleEvent, CommentEvent, TreasuryEvent, LastSavedTimeStamp, MergeEvent, TransferEvent, SplitEvent, MountEvent
+    TurnEvent, BuildEvent, ShootEvent, MoveEvent, RecruitmentEvent, BattleEvent, CommentEvent, TreasuryEvent, \
+    LastSavedTimeStamp, MergeEvent, TransferEvent, SplitEvent, MountEvent
 
 admin.site.register(Realm)
 admin.site.register(RealmMembership)
