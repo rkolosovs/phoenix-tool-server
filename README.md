@@ -31,3 +31,7 @@ docker build -t <image_name>:<version_tag> .
 
 docker run -d -p 8000:8000 <image_name>:<version_tag> \
 The frontend is now accessible via http://0.0.0.0:8000. To see container details use docker ps
+
+## CONTRIBUTION POLICY
+
+This project is run for the benefit of the Erkenfara community and with its specific technical and functional requirements in mind. Please refrain from issuing pull requests to this project if you are not part of it. Just fork the project and develop it independantly of this project (as permitted by the license) if you find some worth while in this repository and wish to contribute. And feel free to give me a note if you build something cool based on this.
